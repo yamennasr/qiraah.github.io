@@ -1,0 +1,64 @@
+/* Basic reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: #000; /* Dark mode */
+  color: white;
+  font-family: Arial, sans-serif;
+  overflow: hidden; /* hide default scrollbar */
+  height: 100vh;
+}
+
+/* App container */
+#app {
+  height: 100vh;
+  width: 100%;
+  overflow-y: scroll;
+  scroll-snap-type: y mandatory;
+}
+
+/* Each story */
+.story {
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  padding: 2rem;
+  text-align: center;
+  scroll-snap-align: start;
+  transition: transform 0.3s;
+}
+
+/* Controls */
+.controls {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 15px;
+}
+
+.controls button {
+  font-size: 1.5rem;
+  background: rgba(255,255,255,0.1);
+  border: none;
+  padding: 10px 15px;
+  border-radius: 10px;
+  color: white;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.controls button.active {
+  background: #1abc9c; /* Highlighted for active state */
+}
+
+.controls button:hover {
+  background: rgba(255,255,255,0.3);
+}
