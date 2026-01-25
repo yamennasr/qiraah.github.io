@@ -1,139 +1,104 @@
-// ==========================
-// Qiraah Swipe App (MVP)
-// ==========================
-
-// Example API: https://api.alquran.cloud/v1/ayah/random
-// For demo purposes, we can fetch 5 random verses
-
 const API_URL = 'https://api.alquran.cloud/v1/ayah/random';
+
 const app = document.getElementById('app');
 const bookmarkBtn = document.getElementById('bookmark-btn');
 const copyBtn = document.getElementById('copy-btn');
 const shuffleBtn = document.getElementById('shuffle-btn');
 
-let stories = [];        // Stores fetched verses
-let currentIndex = 0;
-let bookmarks = new Set();
+const homeTab = document.getElementById('home-tab');
+const bookmarksTab = document.getElementById('bookmarks-tab');
+const bookmarksView = document.getElementById('bookmarks-view');
+const appView = document.getElementById('app-view');
+const bookmarksList = document.getElementById('bookmarks-list');
+
+let currentStory = null;
+let bookmarks = {};
 let shuffleMode = false;
 
-// Fetch multiple random stories
-async function fetchStories(count = 5) {
-  stories = [];
-  for (let i = 0; i < count; i++) {
-    const res = await fetch(API_URL);
-    const data = await res.json();
-    stories.push({
-      id: data.data.number,
-      text: data.data.text
-    });
-  }
-  renderStories();
+/* FETCH AYAH */
+async function fetchAyah() {
+  const res = await fetch(API_URL);
+  const data = await res.json();
+  return {
+    id: data.data.number,
+    text: data.data.text
+  };
 }
 
-// Render stories in DOM
-function renderStories() {
+/* RENDER STORY */
+async function renderStory() {
+  const ayah = await fetchAyah();
+  currentStory = ayah;
+
   app.innerHTML = '';
-  stories.forEach(story => {
-    const div = document.createElement('div');
-    div.classList.add('story');
-    div.setAttribute('data-id', story.id);
-    div.textContent = story.text;
-    app.appendChild(div);
-  });
-  scrollToStory(currentIndex);
-}
+  const div = document.createElement('div');
+  div.className = 'story';
+  div.textContent = ayah.text;
+  app.appendChild(div);
 
-// Scroll to a specific story
-function scrollToStory(index) {
-  const storyElements = document.querySelectorAll('.story');
-  if (storyElements[index]) {
-    storyElements[index].scrollIntoView({ behavior: 'smooth' });
-    updateControls();
-  }
-}
-
-// Update buttons (bookmark highlight)
-function updateControls() {
-  const id = stories[currentIndex].id;
-  bookmarkBtn.classList.toggle('active', bookmarks.has(id));
-}
-
-// ==========================
-// Swipe / Scroll Handling
-// ==========================
-
-let startY = 0;
-let endY = 0;
-
-// Touch start
-app.addEventListener('touchstart', e => {
-  startY = e.touches[0].clientY;
-});
-
-// Touch end
-app.addEventListener('touchend', e => {
-  endY = e.changedTouches[0].clientY;
-  handleSwipe();
-});
-
-// Mouse wheel (desktop testing)
-document.addEventListener('wheel', e => {
-  if (e.deltaY > 0) nextStory();
-  else previousStory();
-});
-
-// ==========================
-// Navigation
-// ==========================
-function nextStory() {
-  if (shuffleMode) {
-    currentIndex = Math.floor(Math.random() * stories.length);
-  } else {
-    currentIndex = Math.min(currentIndex + 1, stories.length - 1);
-  }
-  scrollToStory(currentIndex);
-}
-
-function previousStory() {
-  if (shuffleMode) {
-    currentIndex = Math.floor(Math.random() * stories.length);
-  } else {
-    currentIndex = Math.max(currentIndex - 1, 0);
-  }
-  scrollToStory(currentIndex);
-}
-
-function handleSwipe() {
-  const diff = startY - endY;
-  if (Math.abs(diff) > 50) { // threshold
-    if (diff > 0) nextStory();
-    else previousStory();
-  }
-}
-
-// ==========================
-// Buttons Actions
-// ==========================
-bookmarkBtn.addEventListener('click', () => {
-  const id = stories[currentIndex].id;
-  if (bookmarks.has(id)) bookmarks.delete(id);
-  else bookmarks.add(id);
   updateControls();
+}
+
+/* CONTROLS */
+function updateControls() {
+  bookmarkBtn.classList.toggle(
+    'active',
+    bookmarks[currentStory.id]
+  );
+}
+
+/* SWIPE */
+let startY = 0;
+app.addEventListener('touchstart', e => startY = e.touches[0].clientY);
+app.addEventListener('touchend', e => {
+  if (Math.abs(startY - e.changedTouches[0].clientY) > 50) {
+    renderStory();
+  }
 });
 
-copyBtn.addEventListener('click', () => {
-  const story = stories[currentIndex];
-  navigator.clipboard.writeText(`Qiraah #${story.id}: ${story.text}`)
-    .then(() => alert('Copied to clipboard!'))
-    .catch(() => alert('Copy failed'));
-});
+/* BUTTON ACTIONS */
+bookmarkBtn.onclick = () => {
+  if (!currentStory) return;
+  if (bookmarks[currentStory.id]) delete bookmarks[currentStory.id];
+  else bookmarks[currentStory.id] = currentStory.text;
+  updateControls();
+};
 
-shuffleBtn.addEventListener('click', () => {
+copyBtn.onclick = () => {
+  navigator.clipboard.writeText(currentStory.text);
+};
+
+shuffleBtn.onclick = () => {
   shuffleMode = !shuffleMode;
   shuffleBtn.classList.toggle('active', shuffleMode);
-});
+};
 
-// ==========================
-// Initialize
-// ==========================
-fetchStories(10); // Fetch 10 random verses for MVP
+/* NAVIGATION */
+homeTab.onclick = () => {
+  homeTab.classList.add('active');
+  bookmarksTab.classList.remove('active');
+  bookmarksView.classList.add('hidden');
+  appView.classList.remove('hidden');
+};
+
+bookmarksTab.onclick = () => {
+  bookmarksTab.classList.add('active');
+  homeTab.classList.remove('active');
+  appView.classList.add('hidden');
+  bookmarksView.classList.remove('hidden');
+  renderBookmarks();
+};
+
+/* BOOKMARK LIST */
+function renderBookmarks() {
+  bookmarksList.innerHTML = '';
+  Object.values(bookmarks).forEach(text => {
+    const div = document.createElement('div');
+    div.className = 'bookmark-item';
+    div.textContent = text;
+    bookmarksList.appendChild(div);
+  });
+}
+
+/* INIT */
+renderStory();
