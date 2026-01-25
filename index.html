@@ -1,22 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Qiraah Swipe App</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Qiraah Swipe</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="app">
-    <!-- Stories will be dynamically inserted here -->
+
+  <!-- MAIN VIEW -->
+  <div id="app-view">
+
+    <!-- STORY CONTAINER -->
+    <div id="app"></div>
+
+    <!-- LEFT CONTROLS -->
+    <div class="side-controls">
+      <button id="bookmark-btn">🔖</button>
+      <button id="copy-btn">📋</button>
+      <button id="shuffle-btn">🔀</button>
+    </div>
+
   </div>
 
-  <!-- Bottom controls -->
-  <div class="controls">
-    <button id="bookmark-btn">🔖</button>
-    <button id="copy-btn">📋</button>
-    <button id="shuffle-btn">🔀</button>
+  <!-- BOOKMARKS VIEW -->
+  <div id="bookmarks-view" class="hidden">
+    <h2>Saved Ayat</h2>
+    <div id="bookmarks-list"></div>
   </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <button id="home-tab" class="active">Home</button>
+    <button id="bookmarks-tab">Bookmarks</button>
+  </nav>
 
   <script src="main.js"></script>
 </body>
