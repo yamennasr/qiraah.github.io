@@ -1,4 +1,3 @@
-/* Basic reset */
 * {
   margin: 0;
   padding: 0;
@@ -6,59 +5,106 @@
 }
 
 body {
-  background-color: #000; /* Dark mode */
+  background: #0b0b0b;
   color: white;
-  font-family: Arial, sans-serif;
-  overflow: hidden; /* hide default scrollbar */
+  font-family: system-ui, -apple-system, sans-serif;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* MAIN VIEW */
+#app-view {
+  position: relative;
   height: 100vh;
 }
 
-/* App container */
+/* STORY FEED */
 #app {
   height: 100vh;
-  width: 100%;
-  overflow-y: scroll;
-  scroll-snap-type: y mandatory;
+  background: #141414; /* dark gray, lighter than black */
+  overflow: hidden;
 }
 
-/* Each story */
 .story {
   height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 2rem;
   padding: 2rem;
-  text-align: center;
-  scroll-snap-align: start;
-  transition: transform 0.3s;
-}
-
-/* Controls */
-.controls {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
-  gap: 15px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-size: 1.8rem;
+  line-height: 1.6;
 }
 
-.controls button {
-  font-size: 1.5rem;
-  background: rgba(255,255,255,0.1);
+/* LEFT CONTROLS */
+.side-controls {
+  position: fixed;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.side-controls button {
+  background: rgba(255,255,255,0.08);
   border: none;
-  padding: 10px 15px;
-  border-radius: 10px;
   color: white;
-  cursor: pointer;
-  transition: background 0.2s;
+  font-size: 1.4rem;
+  padding: 10px;
+  border-radius: 12px;
 }
 
-.controls button.active {
-  background: #1abc9c; /* Highlighted for active state */
+.side-controls button.active {
+  background: #1abc9c;
 }
 
-.controls button:hover {
-  background: rgba(255,255,255,0.3);
+/* BOTTOM NAV */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  height: 60px;
+  background: #090909;
+  display: flex;
+  border-top: 1px solid #1a1a1a;
+}
+
+.bottom-nav button {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 1rem;
+}
+
+.bottom-nav button.active {
+  color: white;
+  font-weight: 600;
+}
+
+/* BOOKMARKS VIEW */
+#bookmarks-view {
+  padding: 1rem;
+  height: calc(100vh - 60px);
+  overflow-y: auto;
+  background: #141414;
+}
+
+#bookmarks-view h2 {
+  margin-bottom: 1rem;
+}
+
+.bookmark-item {
+  padding: 1rem;
+  margin-bottom: 10px;
+  background: #1c1c1c;
+  border-radius: 10px;
+  font-size: 1rem;
+}
+
+/* UTILITY */
+.hidden {
+  display: none;
 }
