@@ -41,6 +41,13 @@ body {
   line-height: 1.6;
 }
 
+/* All UI icons */
+button img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
 /* LEFT CONTROLS */
 .side-controls {
   position: fixed;
@@ -58,10 +65,6 @@ body {
   padding: 6px;
   cursor: pointer;
   border-radius: 16px;
-}
-
-.side-controls button.active {
-  background: #1abc9c20;
 }
 
 /* BOTTOM NAV */
