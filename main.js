@@ -1,3 +1,7 @@
+// ===============================
+// Qiraah Swipe App – JPG Icons
+// ===============================
+
 const API_URL = 'https://api.alquran.cloud/v1/ayah/random';
 
 // Views
@@ -13,33 +17,41 @@ const shuffleBtn = document.getElementById('shuffle-btn');
 const homeTab = document.getElementById('home-tab');
 const bookmarksTab = document.getElementById('bookmarks-tab');
 
+// ===============================
 // ICON URLS (JPG)
+// ===============================
+
 const icons = {
   save: {
-    active: 'https://i.ibb.co/8D5TnMxt/Save-Active.jpg',
-    inactive: 'https://i.ibb.co/B22R2fpk/Save-Inactive.jpg'
+    active: 'https://i.ibb.co/0pLP8T6R/Save-Active.png',
+    inactive: 'https://i.ibb.co/Q3P8BDcP/Save-Inactive.png'
   },
   shuffle: {
-    active: 'https://i.ibb.co/MDDQV0rs/Shuffle-Active.jpg',
-    inactive: 'https://i.ibb.co/ZpkB2yJj/Shuffle-Inactive.jpg'
+    active: 'https://i.ibb.co/215F5LQ3/Shuffle-Active.png',
+    inactive: 'https://i.ibb.co/9mgRFgGv/Shuffle-Inactive.png'
   },
   home: {
-    active: 'https://i.ibb.co/wFwcRXwT/Home-Active.jpg',
-    inactive: 'https://i.ibb.co/hxh0ftQS/Home-inactive.jpg'
+    active: 'https://i.ibb.co/LdPFz7HY/Home-Active.png',
+    inactive: 'https://i.ibb.co/6c6K6YDC/Home-Inactive.png'
   },
   bookmarksTab: {
-    active: 'https://i.ibb.co/j9z5C0wf/Bookmarked-Tab-Active.jpg',
-    inactive: 'https://i.ibb.co/rGhs15xm/Bookmarked-Tab-Inactive.jpg'
+    active: 'https://i.ibb.co/YTRkNwXh/Bookmarked-Tab-Active.png',
+    inactive: 'https://i.ibb.co/TNN1j54/Bookmarked-Tab-Inactive.png'
   }
 };
 
-
+// ===============================
 // STATE
+// ===============================
+
 let bookmarks = {};
 let currentStoryEl = null;
 let loading = false;
 
-// FETCH AYAT
+// ===============================
+// FETCH AYAH
+// ===============================
+
 async function fetchAyah() {
   const res = await fetch(API_URL);
   const data = await res.json();
@@ -49,8 +61,10 @@ async function fetchAyah() {
   };
 }
 
-
+// ===============================
 // CREATE STORY
+// ===============================
+
 function createStory(text, id) {
   const div = document.createElement('div');
   div.className = 'story';
@@ -59,8 +73,10 @@ function createStory(text, id) {
   return div;
 }
 
-
+// ===============================
 // ADD STORY (INFINITE FEED)
+// ===============================
+
 async function addStory() {
   if (loading) return;
   loading = true;
