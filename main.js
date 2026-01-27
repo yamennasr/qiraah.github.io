@@ -1,21 +1,45 @@
 const API_URL = 'https://api.alquran.cloud/v1/ayah/random';
 
+// Views
+const appView = document.getElementById('app-view');
+const bookmarksView = document.getElementById('bookmarks-view');
 const app = document.getElementById('app');
+const bookmarksList = document.getElementById('bookmarks-list');
+
+// Buttons
 const bookmarkBtn = document.getElementById('bookmark-btn');
 const copyBtn = document.getElementById('copy-btn');
 const shuffleBtn = document.getElementById('shuffle-btn');
-
 const homeTab = document.getElementById('home-tab');
 const bookmarksTab = document.getElementById('bookmarks-tab');
-const bookmarksView = document.getElementById('bookmarks-view');
-const appView = document.getElementById('app-view');
-const bookmarksList = document.getElementById('bookmarks-list');
 
-let currentStory = null;
+// ICON URLS (JPG)
+const icons = {
+  save: {
+    active: 'https://i.ibb.co/8D5TnMxt/Save-Active.jpg',
+    inactive: 'https://i.ibb.co/B22R2fpk/Save-Inactive.jpg'
+  },
+  shuffle: {
+    active: 'https://i.ibb.co/MDDQV0rs/Shuffle-Active.jpg',
+    inactive: 'https://i.ibb.co/ZpkB2yJj/Shuffle-Inactive.jpg'
+  },
+  home: {
+    active: 'https://i.ibb.co/wFwcRXwT/Home-Active.jpg',
+    inactive: 'https://i.ibb.co/hxh0ftQS/Home-inactive.jpg'
+  },
+  bookmarksTab: {
+    active: 'https://i.ibb.co/j9z5C0wf/Bookmarked-Tab-Active.jpg',
+    inactive: 'https://i.ibb.co/rGhs15xm/Bookmarked-Tab-Inactive.jpg'
+  }
+};
+
+
+// STATE
 let bookmarks = {};
-let shuffleMode = false;
+let currentStoryEl = null;
+let loading = false;
 
-/* FETCH AYAH */
+// FETCH AYAT
 async function fetchAyah() {
   const res = await fetch(API_URL);
   const data = await res.json();
@@ -25,74 +49,146 @@ async function fetchAyah() {
   };
 }
 
-/* RENDER STORY */
-async function renderStory() {
-  const ayah = await fetchAyah();
-  currentStory = ayah;
 
-  app.innerHTML = '';
+// CREATE STORY
+function createStory(text, id) {
   const div = document.createElement('div');
   div.className = 'story';
-  div.textContent = ayah.text;
-  app.appendChild(div);
-
-  updateControls();
+  div.dataset.id = id;
+  div.textContent = text;
+  return div;
 }
 
-/* CONTROLS */
-function updateControls() {
-  bookmarkBtn.classList.toggle(
-    'active',
-    bookmarks[currentStory.id]
-  );
-}
 
-/* SWIPE */
-let startY = 0;
-app.addEventListener('touchstart', e => startY = e.touches[0].clientY);
-app.addEventListener('touchend', e => {
-  if (Math.abs(startY - e.changedTouches[0].clientY) > 50) {
-    renderStory();
+// ADD STORY (INFINITE FEED)
+async function addStory() {
+  if (loading) return;
+  loading = true;
+
+  const ayah = await fetchAyah();
+  const story = createStory(ayah.text, ayah.id);
+  app.appendChild(story);
+
+  if (!currentStoryEl) {
+    currentStoryEl = story;
+    updateBookmarkIcon(story.dataset.id);
   }
+
+  loading = false;
+}
+
+// ===============================
+// INIT FEED
+// ===============================
+
+async function initFeed() {
+  app.innerHTML = '';
+  await addStory();
+  await addStory(); // preload next
+}
+
+// ===============================
+// SCROLL HANDLING
+// ===============================
+
+app.addEventListener('scroll', () => {
+  const { scrollTop, scrollHeight, clientHeight } = app;
+
+  // Load next Ayah near bottom
+  if (scrollTop + clientHeight >= scrollHeight - 80) {
+    addStory();
+  }
+
+  // Detect active story
+  const stories = document.querySelectorAll('.story');
+  stories.forEach(story => {
+    const rect = story.getBoundingClientRect();
+    if (rect.top >= 0 && rect.top < window.innerHeight / 2) {
+      if (currentStoryEl !== story) {
+        currentStoryEl = story;
+        updateBookmarkIcon(story.dataset.id);
+      }
+    }
+  });
 });
 
-/* BUTTON ACTIONS */
+// ===============================
+// ICON UPDATES
+// ===============================
+
+function updateBookmarkIcon(id) {
+  bookmarkBtn.querySelector('img').src =
+    bookmarks[id] ? icons.save.active : icons.save.inactive;
+}
+
+// ===============================
+// ACTION BUTTONS
+// ===============================
+
+// Bookmark
 bookmarkBtn.onclick = () => {
-  if (!currentStory) return;
-  if (bookmarks[currentStory.id]) delete bookmarks[currentStory.id];
-  else bookmarks[currentStory.id] = currentStory.text;
-  updateControls();
+  if (!currentStoryEl) return;
+
+  const id = currentStoryEl.dataset.id;
+  const text = currentStoryEl.textContent;
+
+  if (bookmarks[id]) delete bookmarks[id];
+  else bookmarks[id] = text;
+
+  updateBookmarkIcon(id);
 };
 
+// Copy
 copyBtn.onclick = () => {
-  navigator.clipboard.writeText(currentStory.text);
+  if (!currentStoryEl) return;
+  navigator.clipboard.writeText(currentStoryEl.textContent);
 };
 
+// Shuffle (UI only for MVP)
 shuffleBtn.onclick = () => {
-  shuffleMode = !shuffleMode;
-  shuffleBtn.classList.toggle('active', shuffleMode);
+  const img = shuffleBtn.querySelector('img');
+  const isActive = img.src === icons.shuffle.active;
+  img.src = isActive ? icons.shuffle.inactive : icons.shuffle.active;
 };
 
-/* NAVIGATION */
+// ===============================
+// BOTTOM NAV
+// ===============================
+
 homeTab.onclick = () => {
-  homeTab.classList.add('active');
-  bookmarksTab.classList.remove('active');
-  bookmarksView.classList.add('hidden');
-  appView.classList.remove('hidden');
-};
+    appView.style.display = 'block';
+    bookmarksView.style.display = 'none';
+  
+    homeTab.querySelector('img').src = icons.home.active;
+    bookmarksTab.querySelector('img').src = icons.bookmarksTab.inactive;
+  };
 
-bookmarksTab.onclick = () => {
-  bookmarksTab.classList.add('active');
-  homeTab.classList.remove('active');
-  appView.classList.add('hidden');
-  bookmarksView.classList.remove('hidden');
-  renderBookmarks();
-};
+  bookmarksTab.onclick = () => {
+    appView.style.display = 'none';
+    bookmarksView.style.display = 'block';
+  
+    bookmarksTab.querySelector('img').src = icons.bookmarksTab.active;
+    homeTab.querySelector('img').src = icons.home.inactive;
+  
+    renderBookmarks();
+  };
 
-/* BOOKMARK LIST */
+// ===============================
+// BOOKMARKS VIEW
+// ===============================
+
 function renderBookmarks() {
   bookmarksList.innerHTML = '';
-  Object.values(bookmarks).forEach(text => {
+
+  const items = Object.values(bookmarks);
+
+  if (!items.length) {
+    bookmarksList.innerHTML =
+      '<p style="opacity:.6">No saved verses yet.</p>';
+    return;
+  }
+
+  items.forEach(text => {
     const div = document.createElement('div');
     div.className = 'bookmark-item';
     div.textContent = text;
@@ -100,5 +196,8 @@ function renderBookmarks() {
   });
 }
 
-/* INIT */
-renderStory();
+// ===============================
+// INIT
+// ===============================
+
+initFeed();
