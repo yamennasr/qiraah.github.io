@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Qiraah Swipe</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/static/style.css" />
 </head>
 <body>
 
@@ -15,11 +15,30 @@
     <div id="app"></div>
 
     <!-- LEFT CONTROLS -->
-    <div class="side-controls">
-      <button id="bookmark-btn">🔖</button>
-      <button id="copy-btn">📋</button>
-      <button id="shuffle-btn">🔀</button>
-    </div>
+<div class="side-controls">
+  <button id="bookmark-btn">
+    <img src="/icons/Save (Inactive).svg" alt="Save">
+  </button>
+
+  <button id="copy-btn">
+    <img src="/icons/Copy.svg" alt="Copy">
+  </button>
+
+  <button id="shuffle-btn">
+    <img src="/icons/Shuffle (Active).svg" alt="Shuffle">
+  </button>
+</div>
+
+<!-- BOTTOM NAV -->
+<nav class="bottom-nav">
+  <button id="home-tab" class="active">
+    <img src="/icons/Home (Active).svg" alt="Home">
+  </button>
+
+  <button id="bookmarks-tab">
+    <img src="/icons/Bookmarked Tab (Inactive).svg" alt="Bookmarks">
+  </button>
+</nav>
 
   </div>
 
@@ -35,6 +54,6 @@
     <button id="bookmarks-tab">Bookmarks</button>
   </nav>
 
-  <script src="main.js"></script>
+  <script src="/static/main.js"></script>
 </body>
 </html>
