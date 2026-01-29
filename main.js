@@ -1,5 +1,5 @@
 // ===============================
-// Qiraah Swipe App – STABLE RANDOM AYAH
+// Qiraah Swipe App – HISTORY + SHUFFLE (STABLE)
 // ===============================
 
 const API_URL = 'https://api.alquran.cloud/v1/ayah/random/ar.asad';
@@ -46,17 +46,36 @@ const icons = {
 // STATE
 // ===============================
 
-let currentAyah = null;
+let ayahHistory = [];
+let historyIndex = -1;
 let bookmarks = {};
-let loading = false;
 let shuffleEnabled = false;
+let loading = false;
 
 // ===============================
-// FETCH RANDOM AYAH (SAFE)
+// PERSISTENCE
+// ===============================
+
+function saveState() {
+  localStorage.setItem('qiraah_history', JSON.stringify(ayahHistory));
+  localStorage.setItem('qiraah_index', historyIndex);
+  localStorage.setItem('qiraah_bookmarks', JSON.stringify(bookmarks));
+  localStorage.setItem('qiraah_shuffle', shuffleEnabled);
+}
+
+function loadState() {
+  ayahHistory = JSON.parse(localStorage.getItem('qiraah_history')) || [];
+  historyIndex = Number(localStorage.getItem('qiraah_index')) || -1;
+  bookmarks = JSON.parse(localStorage.getItem('qiraah_bookmarks')) || {};
+  shuffleEnabled = localStorage.getItem('qiraah_shuffle') === 'true';
+}
+
+// ===============================
+// FETCH AYAH
 // ===============================
 
 async function fetchRandomAyah() {
-  const res = await fetch(`${API_URL}?t=${Date.now()}`); // cache-bust
+  const res = await fetch(`${API_URL}?t=${Date.now()}`);
   const json = await res.json();
 
   return {
@@ -68,105 +87,125 @@ async function fetchRandomAyah() {
 }
 
 // ===============================
-// RENDER AYAH
+// RENDER
 // ===============================
 
 function renderAyah(ayah) {
   app.innerHTML = `
     <div class="story">
       <p class="ayah-text">${ayah.text}</p>
+      <div class="ayah-meta">${ayah.surah} · Ayah ${ayah.ayahNumber}</div>
     </div>
   `;
 
-  currentAyah = ayah;
   updateBookmarkIcon();
+  saveState();
 }
 
 // ===============================
-// LOAD NEXT AYAH (HARD GUARANTEE)
+// NAVIGATION
 // ===============================
 
-async function loadNextAyah() {
+async function goNext() {
   if (loading) return;
   loading = true;
 
-  try {
-    const ayah = await fetchRandomAyah();
-    renderAyah(ayah);
-  } catch (err) {
-    console.error('Ayah fetch failed:', err);
+  if (historyIndex < ayahHistory.length - 1) {
+    historyIndex++;
+    renderAyah(ayahHistory[historyIndex]);
+    loading = false;
+    return;
   }
 
-  // lock for a short moment to avoid double-fire
-  setTimeout(() => {
-    loading = false;
-  }, 300);
+  const ayah = await fetchRandomAyah();
+  ayahHistory.push(ayah);
+  historyIndex++;
+
+  renderAyah(ayah);
+  loading = false;
+}
+
+function goPrevious() {
+  if (historyIndex <= 0) return;
+
+  historyIndex--;
+  renderAyah(ayahHistory[historyIndex]);
 }
 
 // ===============================
-// SWIPE DETECTION (TOUCH + MOUSE)
+// SWIPE HANDLING
 // ===============================
 
 let startY = 0;
 const SWIPE_THRESHOLD = 60;
 
-// Touch
 app.addEventListener('touchstart', e => {
   startY = e.touches[0].clientY;
 });
 
 app.addEventListener('touchend', e => {
   const endY = e.changedTouches[0].clientY;
-  if (Math.abs(startY - endY) > SWIPE_THRESHOLD) {
-    loadNextAyah();
-  }
+  const delta = startY - endY;
+
+  if (Math.abs(delta) < SWIPE_THRESHOLD) return;
+  delta > 0 ? goNext() : goPrevious();
 });
 
-// Mouse wheel
 app.addEventListener('wheel', e => {
-  if (Math.abs(e.deltaY) > 40) {
-    loadNextAyah();
-  }
+  if (Math.abs(e.deltaY) < 40) return;
+  e.deltaY > 0 ? goNext() : goPrevious();
 });
 
 // ===============================
-// ICON STATE
+// BOOKMARKS
 // ===============================
 
 function updateBookmarkIcon() {
-  if (!currentAyah) return;
+  const ayah = ayahHistory[historyIndex];
+  if (!ayah) return;
 
   bookmarkBtn.querySelector('img').src =
-    bookmarks[currentAyah.id]
+    bookmarks[ayah.id]
       ? icons.save.active
       : icons.save.inactive;
 }
 
-// ===============================
-// ACTION BUTTONS
-// ===============================
-
 bookmarkBtn.onclick = () => {
-  if (!currentAyah) return;
+  const ayah = ayahHistory[historyIndex];
+  if (!ayah) return;
 
-  if (bookmarks[currentAyah.id]) {
-    delete bookmarks[currentAyah.id];
-  } else {
-    bookmarks[currentAyah.id] = currentAyah;
-  }
+  bookmarks[ayah.id]
+    ? delete bookmarks[ayah.id]
+    : (bookmarks[ayah.id] = ayah);
 
   updateBookmarkIcon();
+  saveState();
 };
 
 copyBtn.onclick = () => {
-  if (!currentAyah) return;
-  navigator.clipboard.writeText(currentAyah.text);
+  const ayah = ayahHistory[historyIndex];
+  if (!ayah) return;
+  navigator.clipboard.writeText(ayah.text);
 };
+
+// ===============================
+// SHUFFLE (REAL, SAFE)
+// ===============================
 
 shuffleBtn.onclick = () => {
   shuffleEnabled = !shuffleEnabled;
+
   shuffleBtn.querySelector('img').src =
     shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
+
+  if (shuffleEnabled && historyIndex < ayahHistory.length - 1) {
+    const past = ayahHistory.slice(0, historyIndex + 1);
+    const future = ayahHistory.slice(historyIndex + 1);
+    future.sort(() => Math.random() - 0.5);
+    ayahHistory = past.concat(future);
+  }
+
+  saveState();
 };
 
 // ===============================
@@ -218,4 +257,13 @@ function renderBookmarks() {
 // INIT
 // ===============================
 
-loadNextAyah();
+loadState();
+
+shuffleBtn.querySelector('img').src =
+  shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
+
+if (historyIndex >= 0 && ayahHistory[historyIndex]) {
+  renderAyah(ayahHistory[historyIndex]);
+} else {
+  goNext();
+}
