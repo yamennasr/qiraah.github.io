@@ -26,6 +26,7 @@ body {
   background: #141414;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
+  overflow: hidden;
   scroll-behavior: smooth;
   z-index: 1;
 }
@@ -33,6 +34,8 @@ body {
 .story {
   height: 100vh;
   scroll-snap-align: start;
+  position: absolute;
+  inset: 0;
   padding: 2rem;
   display: flex;
   align-items: center;
@@ -40,6 +43,7 @@ body {
   text-align: center;
   font-size: 1.8rem;
   line-height: 1.6;
+  will-change: transform;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
@@ -92,7 +96,7 @@ button img {
 /* LEFT CONTROLS */
 .side-controls {
   position: fixed;
-  left: 12px;
+  right: 12px;
   bottom: 0.1%;
   transform: translateY(-50%);
   display: flex;
