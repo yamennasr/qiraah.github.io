@@ -2,7 +2,7 @@
 // Qiraah Swipe App – STABLE RANDOM AYAH
 // ===============================
 
-const API_URL = 'https://api.alquran.cloud/v1/ayah/random/en.asad';
+const API_URL = 'https://api.alquran.cloud/v1/ayah/random/ar.asad';
 
 // ===============================
 // ELEMENTS
