@@ -19,7 +19,6 @@ body {
   height: 100vh;
 }
 
-
 /* STORY FEED */
 #app {
   pointer-events: auto;
@@ -45,6 +44,9 @@ body {
 
 .ayah-text {
   color: #fff;
+  font-family: "Amiri Quran", serif;
+  font-weight: 400;
+  font-style: normal;
   font-size: 1.4rem;
   line-height: 1.8;
   text-align: center;
