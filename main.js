@@ -1,8 +1,8 @@
 // ===============================
-// Qiraah Swipe – STABLE SCROLL FEED
+// Qiraah Swipe App – STABLE RANDOM AYAH
 // ===============================
 
-const API_URL = 'https://api.alquran.cloud/v1/ayah/random';
+const API_URL = 'https://api.alquran.cloud/v1/ayah/random/en.asad';
 
 // ===============================
 // ELEMENTS
@@ -27,6 +27,18 @@ const icons = {
   save: {
     active: 'https://i.ibb.co/0pLP8T6R/Save-Active.png',
     inactive: 'https://i.ibb.co/Q3P8BDcP/Save-Inactive.png'
+  },
+  shuffle: {
+    active: 'https://i.ibb.co/215F5LQ3/Shuffle-Active.png',
+    inactive: 'https://i.ibb.co/9mgRFgGv/Shuffle-Inactive.png'
+  },
+  home: {
+    active: 'https://i.ibb.co/LdPFz7HY/Home-Active.png',
+    inactive: 'https://i.ibb.co/6c6K6YDC/Home-Inactive.png'
+  },
+  bookmarksTab: {
+    active: 'https://i.ibb.co/YTRkNwXh/Bookmarked-Tab-Active.png',
+    inactive: 'https://i.ibb.co/TNN1j54/Bookmarked-Tab-Inactive.png'
   }
 };
 
@@ -34,43 +46,44 @@ const icons = {
 // STATE
 // ===============================
 
+let currentAyah = null;
 let bookmarks = {};
 let loading = false;
-let currentAyahId = null;
+let shuffleEnabled = false;
 
 // ===============================
-// FETCH AYAH
+// FETCH RANDOM AYAH (SAFE)
 // ===============================
 
-async function fetchAyah() {
-  const res = await fetch(API_URL);
-  const data = await res.json();
+async function fetchRandomAyah() {
+  const res = await fetch(`${API_URL}?t=${Date.now()}`); // cache-bust
+  const json = await res.json();
+
   return {
-    id: data.data.number,
-    text: data.data.text
+    id: `${json.data.surah.number}:${json.data.numberInSurah}`,
+    text: json.data.text,
+    surah: json.data.surah.englishName,
+    ayahNumber: json.data.numberInSurah
   };
 }
 
 // ===============================
-// ADD STORY TO FEED
+// RENDER AYAH
 // ===============================
 
-function appendStory(ayah) {
-  const story = document.createElement('div');
-  story.className = 'story';
-  story.dataset.id = ayah.id;
-
-  story.innerHTML = `
-    <p class="ayah-text">${ayah.text}</p>
+function renderAyah(ayah) {
+  app.innerHTML = `
+    <div class="story">
+      <p class="ayah-text">${ayah.text}</p>
+    </div>
   `;
 
-  app.appendChild(story);
-  currentAyahId = ayah.id;
+  currentAyah = ayah;
   updateBookmarkIcon();
 }
 
 // ===============================
-// LOAD NEXT AYAH
+// LOAD NEXT AYAH (HARD GUARANTEE)
 // ===============================
 
 async function loadNextAyah() {
@@ -78,77 +91,103 @@ async function loadNextAyah() {
   loading = true;
 
   try {
-    const ayah = await fetchAyah();
-    appendStory(ayah);
-  } catch (e) {
-    console.error(e);
+    const ayah = await fetchRandomAyah();
+    renderAyah(ayah);
+  } catch (err) {
+    console.error('Ayah fetch failed:', err);
   }
 
-  loading = false;
+  // lock for a short moment to avoid double-fire
+  setTimeout(() => {
+    loading = false;
+  }, 300);
 }
 
 // ===============================
-// SCROLL DETECTION (CORRECT WAY)
+// SWIPE DETECTION (TOUCH + MOUSE)
 // ===============================
 
-app.addEventListener('scroll', () => {
-  const nearBottom =
-    app.scrollTop + app.clientHeight >= app.scrollHeight - 100;
+let startY = 0;
+const SWIPE_THRESHOLD = 60;
 
-  if (nearBottom) {
+// Touch
+app.addEventListener('touchstart', e => {
+  startY = e.touches[0].clientY;
+});
+
+app.addEventListener('touchend', e => {
+  const endY = e.changedTouches[0].clientY;
+  if (Math.abs(startY - endY) > SWIPE_THRESHOLD) {
+    loadNextAyah();
+  }
+});
+
+// Mouse wheel
+app.addEventListener('wheel', e => {
+  if (Math.abs(e.deltaY) > 40) {
     loadNextAyah();
   }
 });
 
 // ===============================
-// BOOKMARK LOGIC
+// ICON STATE
 // ===============================
 
 function updateBookmarkIcon() {
+  if (!currentAyah) return;
+
   bookmarkBtn.querySelector('img').src =
-    bookmarks[currentAyahId]
+    bookmarks[currentAyah.id]
       ? icons.save.active
       : icons.save.inactive;
 }
 
-bookmarkBtn.onclick = () => {
-  if (!currentAyahId) return;
+// ===============================
+// ACTION BUTTONS
+// ===============================
 
-  if (bookmarks[currentAyahId]) {
-    delete bookmarks[currentAyahId];
+bookmarkBtn.onclick = () => {
+  if (!currentAyah) return;
+
+  if (bookmarks[currentAyah.id]) {
+    delete bookmarks[currentAyah.id];
   } else {
-    const story = document.querySelector(
-      `.story[data-id="${currentAyahId}"] .ayah-text`
-    );
-    bookmarks[currentAyahId] = story.textContent;
+    bookmarks[currentAyah.id] = currentAyah;
   }
 
   updateBookmarkIcon();
 };
 
-// ===============================
-// COPY
-// ===============================
-
 copyBtn.onclick = () => {
-  const story = document.querySelector(
-    `.story[data-id="${currentAyahId}"] .ayah-text`
-  );
-  if (story) navigator.clipboard.writeText(story.textContent);
+  if (!currentAyah) return;
+  navigator.clipboard.writeText(currentAyah.text);
+};
+
+shuffleBtn.onclick = () => {
+  shuffleEnabled = !shuffleEnabled;
+  shuffleBtn.querySelector('img').src =
+    shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
 };
 
 // ===============================
-// NAV
+// BOTTOM NAV
 // ===============================
 
 homeTab.onclick = () => {
   appView.style.display = 'block';
   bookmarksView.style.display = 'none';
+
+  homeTab.querySelector('img').src = icons.home.active;
+  bookmarksTab.querySelector('img').src = icons.bookmarksTab.inactive;
 };
 
 bookmarksTab.onclick = () => {
   appView.style.display = 'none';
   bookmarksView.style.display = 'block';
+
+  bookmarksTab.querySelector('img').src = icons.bookmarksTab.active;
+  homeTab.querySelector('img').src = icons.home.inactive;
+
   renderBookmarks();
 };
 
@@ -160,15 +199,17 @@ function renderBookmarks() {
   bookmarksList.innerHTML = '';
 
   const items = Object.values(bookmarks);
+
   if (!items.length) {
-    bookmarksList.innerHTML = '<p>No saved verses yet.</p>';
+    bookmarksList.innerHTML =
+      '<p style="opacity:.6">No saved verses yet.</p>';
     return;
   }
 
-  items.forEach(text => {
+  items.forEach(a => {
     const div = document.createElement('div');
     div.className = 'bookmark-item';
-    div.textContent = text;
+    div.textContent = a.text;
     bookmarksList.appendChild(div);
   });
 }
@@ -178,4 +219,3 @@ function renderBookmarks() {
 // ===============================
 
 loadNextAyah();
-loadNextAyah(); // preload second for smooth scroll
