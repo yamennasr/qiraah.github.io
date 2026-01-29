@@ -40,6 +40,35 @@ body {
   text-align: center;
   font-size: 1.8rem;
   line-height: 1.6;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.story.enter {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.story.enter-active {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.story.exit {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.story.exit-active {
+  opacity: 0;
+  transform: translateY(-40px);
+}
+
+.ayah-meta {
+  position: absolute;
+  bottom: 24px;
+  left: 20px;
+  font-size: 13px;
+  opacity: 0.6;
 }
 
 .ayah-text {
