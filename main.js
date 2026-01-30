@@ -32,24 +32,25 @@ const bookmarksTab = document.getElementById('bookmarks-tab');
 // ===============================
 // ICONS
 // ===============================
+
 const icons = {
-  save: {
-    active: 'https://i.ibb.co/0pLP8T6R/Save-Active.png',
-    inactive: 'https://i.ibb.co/Q3P8BDcP/Save-Inactive.png'
-  },
-  shuffle: {
-    active: 'https://i.ibb.co/215F5LQ3/Shuffle-Active.png',
-    inactive: 'https://i.ibb.co/9mgRFgGv/Shuffle-Inactive.png'
-  },
-  home: {
-    active: 'https://i.ibb.co/LdPFz7HY/Home-Active.png',
-    inactive: 'https://i.ibb.co/6c6K6YDC/Home-Inactive.png'
-  },
-  bookmarksTab: {
-    active: 'https://i.ibb.co/YTRkNwXh/Bookmarked-Tab-Active.png',
-    inactive: 'https://i.ibb.co/TNN1j54/Bookmarked-Tab-Inactive.png'
-  }
-};
+    save: {
+      active: 'https://i.ibb.co/0pLP8T6R/Save-Active.png',
+      inactive: 'https://i.ibb.co/Q3P8BDcP/Save-Inactive.png'
+    },
+    shuffle: {
+      active: 'https://i.ibb.co/215F5LQ3/Shuffle-Active.png',
+      inactive: 'https://i.ibb.co/9mgRFgGv/Shuffle-Inactive.png'
+    },
+    home: {
+      active: 'https://i.ibb.co/LdPFz7HY/Home-Active.png',
+      inactive: 'https://i.ibb.co/6c6K6YDC/Home-Inactive.png'
+    },
+    bookmarksTab: {
+      active: 'https://i.ibb.co/YTRkNwXh/Bookmarked-Tab-Active.png',
+      inactive: 'https://i.ibb.co/TNN1j54/Bookmarked-Tab-Inactive.png'
+    }
+  };
 
 // ===============================
 // STATE
@@ -291,16 +292,28 @@ langBtn.onclick = async () => {
 // ===============================
 // BOTTOM NAV
 // ===============================
-homeTab.onclick = () => {
-  appView.style.display = 'block';
-  bookmarksView.style.display = 'none';
-};
+function setActiveTab(tab) {
+    if (tab === 'home') {
+      homeTab.querySelector('img').src = icons.home.active;
+      bookmarksTab.querySelector('img').src = icons.bookmarksTab.inactive;
+    } else {
+      bookmarksTab.querySelector('img').src = icons.bookmarksTab.active;
+      homeTab.querySelector('img').src = icons.home.inactive;
+    }
+  }
 
-bookmarksTab.onclick = () => {
-  appView.style.display = 'none';
-  bookmarksView.style.display = 'block';
-  renderBookmarks();
-};
+  homeTab.onclick = () => {
+    appView.style.display = 'block';
+    bookmarksView.style.display = 'none';
+    setActiveTab('home');
+  };
+  
+  bookmarksTab.onclick = () => {
+    appView.style.display = 'none';
+    bookmarksView.style.display = 'block';
+    setActiveTab('bookmarks');
+    renderBookmarks();
+  };
 
 // ===============================
 // BOOKMARKS VIEW
@@ -336,3 +349,5 @@ if (ayahHistory[historyIndex]) {
 } else {
   goNext();
 }
+
+setActiveTab('home');
