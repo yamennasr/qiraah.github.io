@@ -241,7 +241,7 @@ function renderBookmarks() {
 
   if (!items.length) {
     bookmarksList.innerHTML =
-      '<p style="opacity:.6">No saved verses yet.</p>';
+      '<p style="opacity:.6">No saved verses yet. Click the bookmark icon to save one now!</p>';
     return;
   }
 
