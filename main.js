@@ -2,7 +2,11 @@
 // Qiraah Swipe App – HISTORY + SHUFFLE (STABLE)
 // ===============================
 
-const API_URL = 'https://api.alquran.cloud/v1/ayah/random/ar.asad';
+function getApiUrl() {
+    return currentLanguage === 'ar'
+      ? 'https://api.alquran.cloud/v1/ayah/random/ar.asad'
+      : 'https://api.alquran.cloud/v1/ayah/random/en.asad';
+  }
 
 // ===============================
 // ELEMENTS
@@ -53,6 +57,10 @@ let shuffleEnabled = false;
 let loading = false;
 
 // ===============================
+
+let currentLanguage = 'ar'; // 'ar' and 'en'
+
+// ===============================
 // PERSISTENCE
 // ===============================
 
@@ -75,62 +83,110 @@ function loadState() {
 // ===============================
 
 async function fetchRandomAyah() {
-  const res = await fetch(`${API_URL}?t=${Date.now()}`);
-  const json = await res.json();
-
-  return {
-    id: `${json.data.surah.number}:${json.data.numberInSurah}`,
-    text: json.data.text,
-    surah: json.data.surah.englishName,
-    ayahNumber: json.data.numberInSurah
-  };
-}
+    const res = await fetch(`${getApiUrl()}?t=${Date.now()}`);
+    const json = await res.json();
+  
+    return {
+      id: `${json.data.surah.number}:${json.data.numberInSurah}`,
+      surahNumber: json.data.surah.number,
+      ayahNumber: json.data.numberInSurah,
+      text: json.data.text,
+      surah: json.data.surah.englishName
+    };
+  }
 
 // ===============================
 // RENDER
 // ===============================
 
-function renderAyah(ayah) {
-  app.innerHTML = `
-    <div class="story">
-      <p class="ayah-text">${ayah.text}</p>
-      <div class="ayah-meta">${ayah.surah} · Ayah ${ayah.ayahNumber}</div>
-    </div>
-  `;
-
-  updateBookmarkIcon();
-  saveState();
-}
+function createStoryElement(ayah) {
+    const el = document.createElement('div');
+    el.className = 'story fade-slide';
+  
+    el.innerHTML = `
+      <div class="story-inner">
+        <p class="ayah-text">${ayah.text}</p>
+        <div class="ayah-meta">
+          ${ayah.surah} · Ayah ${ayah.ayahNumber}
+        </div>
+      </div>
+    `;
+  
+    return el;
+  }
 
 // ===============================
 // NAVIGATION
 // ===============================
 
 async function goNext() {
-  if (loading) return;
-  loading = true;
-
-  if (historyIndex < ayahHistory.length - 1) {
-    historyIndex++;
-    renderAyah(ayahHistory[historyIndex]);
-    loading = false;
-    return;
+    if (loading) return;
+    loading = true;
+  
+    const nextAyah =
+      historyIndex < ayahHistory.length - 1
+        ? ayahHistory[historyIndex + 1]
+        : await fetchRandomAyah();
+  
+    if (historyIndex === ayahHistory.length - 1) {
+      ayahHistory.push(nextAyah);
+    }
+  
+    const nextEl = createStoryElement(nextAyah);
+    nextEl.style.transform = 'translateY(100%)';
+    nextEl.style.opacity = '0';
+  
+    app.appendChild(nextEl);
+  
+    requestAnimationFrame(() => {
+      nextEl.style.transform = 'translateY(0)';
+      nextEl.style.opacity = '1';
+  
+      if (currentEl) {
+        currentEl.style.transform = 'translateY(-30%)';
+        currentEl.style.opacity = '0';
+      }
+    });
+  
+    setTimeout(() => {
+      if (currentEl) app.removeChild(currentEl);
+      currentEl = nextEl;
+      historyIndex++;
+      updateBookmarkIcon();
+      loading = false;
+    }, 450);
   }
 
-  const ayah = await fetchRandomAyah();
-  ayahHistory.push(ayah);
-  historyIndex++;
-
-  renderAyah(ayah);
-  loading = false;
-}
-
-function goPrevious() {
-  if (historyIndex <= 0) return;
-
-  historyIndex--;
-  renderAyah(ayahHistory[historyIndex]);
-}
+  function goPrevious() {
+    if (loading || historyIndex <= 0) return;
+    loading = true;
+  
+    const prevAyah = ayahHistory[historyIndex - 1];
+    const prevEl = createStoryElement(prevAyah);
+  
+    prevEl.style.transform = 'translateY(-100%)';
+    prevEl.style.opacity = '0';
+  
+    app.appendChild(prevEl);
+  
+    requestAnimationFrame(() => {
+      prevEl.style.transform = 'translateY(0)';
+      prevEl.style.opacity = '1';
+  
+      if (currentEl) {
+        currentEl.style.transform = 'translateY(30%)';
+        currentEl.style.opacity = '0';
+      }
+    });
+  
+    setTimeout(() => {
+      if (currentEl) app.removeChild(currentEl);
+      currentEl = prevEl;
+      historyIndex--;
+      updateBookmarkIcon();
+      loading = false;
+    }, 450);
+  }
 
 // ===============================
 // SWIPE HANDLING
@@ -209,6 +265,37 @@ shuffleBtn.onclick = () => {
 };
 
 // ===============================
+
+const langBtn = document.getElementById('lang-btn');
+
+langBtn.onclick = async () => {
+  if (loading) return;
+
+  currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+  langBtn.querySelector('span').textContent =
+    currentLanguage === 'ar' ? 'AR' : 'EN';
+
+  // Re-fetch SAME ayah in new language
+  const current = ayahHistory[historyIndex];
+  if (!current) return;
+
+  loading = true;
+
+  const res = await fetch(
+    `https://api.alquran.cloud/v1/ayah/${current.id}/${currentLanguage}.asad`
+  );
+  const json = await res.json();
+
+  ayahHistory[historyIndex] = {
+    ...current,
+    text: json.data.text
+  };
+
+  renderAyah(ayahHistory[historyIndex]);
+  loading = false;
+};
+
+// ===============================
 // BOTTOM NAV
 // ===============================
 
@@ -241,7 +328,7 @@ function renderBookmarks() {
 
   if (!items.length) {
     bookmarksList.innerHTML =
-      '<p style="opacity:.6">No saved verses yet. Click the bookmark icon to save one now!</p>';
+      '<p style="opacity:.6">No saved verses yet.</p>';
     return;
   }
 
