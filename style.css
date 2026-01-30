@@ -136,6 +136,10 @@ button img {
   border-radius: 16px;
 }
 
+.side-text {
+  color: rgba(255, 255, 255, 0.726);
+}
+
 .lang-btn {
   background-image: url("https://i.ibb.co/zVYXRmfz/Lang-AR.png");
 }
@@ -163,6 +167,8 @@ button img {
 
 .bottom-nav button {
   flex: 1;
+  padding-bottom: 12px;
+  margin: 16px;
   background: none;
   border: none;
   color: #888;
@@ -171,6 +177,7 @@ button img {
 }
 
 .nav-text {
+  margin-top: -10px;
   font-family: system-ui, -apple-system, sans-serif;
   font-size: 0.75rem;
 }
