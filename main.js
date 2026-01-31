@@ -109,7 +109,9 @@ function loadState() {
 // FETCHERS
 // ===============================
 async function fetchAyahByOrder(surah, ayah) {
-  const res = await fetch(getAyahUrl(`${surah}:${ayah}`));
+  const res = await fetch(
+    `https://api.alquran.cloud/v1/ayah/${surah}:${ayah}/${currentLanguage}.asad`
+  );
   const json = await res.json();
 
   return {
