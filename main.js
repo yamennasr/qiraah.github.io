@@ -11,6 +11,10 @@ function getAyahUrl(ref) {
   return `https://api.alquran.cloud/v1/ayah/${ref}/${currentLanguage}.asad`;
 }
 
+function hasForwardHistory() {
+  return historyIndex < ayahHistory.length - 1;
+}
+
 // ===============================
 // ELEMENTS
 // ===============================
@@ -125,7 +129,7 @@ async function fetchAyahByOrder(surah, ayah) {
 
 async function fetchRandomAyah() {
   const res = await fetch(
-    `https://api.alquran.cloud/v1/ayah/random/${currentLanguage}.asad`
+    `https://api.alquran.cloud/v1/ayah/random/${currentLanguage}.asad?t=${Date.now()}`
   );
   const json = await res.json();
 
@@ -161,7 +165,6 @@ function createStoryElement(ayah) {
   el.innerHTML = `
     <div class="story-inner">
       <p class="ayah-text">${ayah.text}</p>
-      <div class="ayah-meta">${ayah.surah} · Ayah ${ayah.ayahNumber}</div>
     </div>
   `;
 
@@ -182,20 +185,40 @@ async function goNext() {
 
   let nextAyah;
 
-  // HISTORY FORWARD
-  if (historyIndex < ayahHistory.length - 1) {
-    nextAyah = ayahHistory[historyIndex + 1];
-  } else {
-    // STRICT MODE CONTROL
-    if (shuffleEnabled) {
+  // ===============================
+  // SHUFFLE MODE (ALWAYS FETCH NEW)
+  // ===============================
+  if (shuffleEnabled) {
+    nextAyah = await fetchRandomAyah();
+
+    // hard duplicate guard
+    const last = ayahHistory[ayahHistory.length - 1];
+    if (last && last.id === nextAyah.id) {
       nextAyah = await fetchRandomAyah();
-    } else {
-      nextAyah = await fetchAyahByOrder(currentSurah, currentAyah);
-      getNextPointer();
     }
+
     ayahHistory.push(nextAyah);
+    historyIndex = ayahHistory.length - 1;
   }
 
+  // ===============================
+  // ORDER MODE (SEQUENTIAL QURAN)
+  // ===============================
+  else {
+    if (historyIndex < ayahHistory.length - 1) {
+      historyIndex++;
+      nextAyah = ayahHistory[historyIndex];
+    } else {
+      nextAyah = await fetchAyahByOrder(currentSurah, currentAyah);
+      ayahHistory.push(nextAyah);
+      historyIndex++;
+      getNextPointer();
+    }
+  }
+
+  // ===============================
+  // ANIMATION
+  // ===============================
   const nextEl = createStoryElement(nextAyah);
   nextEl.style.transform = 'translateY(100%)';
   nextEl.style.opacity = '0';
@@ -204,30 +227,27 @@ async function goNext() {
   requestAnimationFrame(() => {
     nextEl.style.transition =
       'transform 0.45s cubic-bezier(.22,.61,.36,1), opacity 0.35s ease';
+
     if (currentEl) {
       currentEl.style.transition =
         'transform 0.45s cubic-bezier(.22,.61,.36,1), opacity 0.35s ease';
+      currentEl.style.transform = 'translateY(-25%)';
+      currentEl.style.opacity = '0';
     }
 
     nextEl.style.transform = 'translateY(0)';
     nextEl.style.opacity = '1';
-
-    if (currentEl) {
-      currentEl.style.transform = 'translateY(-25%)';
-      currentEl.style.opacity = '0';
-    }
   });
 
   setTimeout(() => {
     if (currentEl) app.removeChild(currentEl);
-    clearTransition(nextEl);
-
     currentEl = nextEl;
-    historyIndex++;
+  
     updateBookmarkIcon();
-    saveState();
+    updateAyahReference(ayahHistory[historyIndex]);
+  
     loading = false;
-  }, 480);
+  }, 450);
 }
 
 function goPrevious() {
@@ -260,14 +280,22 @@ function goPrevious() {
 
   setTimeout(() => {
     if (currentEl) app.removeChild(currentEl);
-    clearTransition(prevEl);
-
     currentEl = prevEl;
     historyIndex--;
+  
     updateBookmarkIcon();
-    saveState();
+    updateAyahReference(ayahHistory[historyIndex]);
+  
     loading = false;
-  }, 480);
+  }, 450);
+}
+
+const ayahReferenceEl = document.getElementById('ayah-reference');
+
+function updateAyahReference(ayah) {
+  if (!ayah) return;
+  ayahReferenceEl.textContent =
+    `${ayah.surah} · Ayah ${ayah.ayahNumber}`;
 }
 
 // ===============================
@@ -324,14 +352,16 @@ copyBtn.onclick = () => {
 // ===============================
 shuffleBtn.onclick = () => {
   shuffleEnabled = !shuffleEnabled;
+
   shuffleBtn.querySelector('img').src =
     shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
-  saveState();
 
-  if (!shuffleEnabled) {
-    currentSurah = ayahHistory[historyIndex]?.surahNumber || 1;
-    currentAyah = (ayahHistory[historyIndex]?.ayahNumber || 0) + 1;
+  if (shuffleEnabled) {
+    // 🚨 CRITICAL: discard forward history
+    ayahHistory = ayahHistory.slice(0, historyIndex + 1);
   }
+
+  saveState();
 };
 
 // ===============================
@@ -449,17 +479,12 @@ if (!shuffleEnabled && ayahHistory.length === 0) {
   currentAyah = 1;
 }
 
-// RESTORE FROM HISTORY
-if (ayahHistory.length > 0 && historyIndex >= 0) {
-  const ayah = ayahHistory[historyIndex];
-  currentSurah = ayah.surahNumber;
-  currentAyah = ayah.ayahNumber + 1;
-
-  currentEl = createStoryElement(ayah);
+if (historyIndex >= 0 && ayahHistory[historyIndex]) {
+  currentEl = createStoryElement(ayahHistory[historyIndex]);
   app.appendChild(currentEl);
-  updateBookmarkIcon();
+  updateAyahReference(ayahHistory[historyIndex]);
 } else {
-  goNext(); // ← this will now load 1:1
+  goNext();
 }
 
 setActiveTab('home');
