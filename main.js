@@ -1,3 +1,6 @@
+localStorage.clear();
+location.reload();
+
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
