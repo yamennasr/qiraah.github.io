@@ -7,10 +7,8 @@
 // ===============================
 let currentLanguage = 'ar'; // 'ar' | 'en'
 
-function getApiUrl() {
-  return currentLanguage === 'ar'
-    ? 'https://api.alquran.cloud/v1/ayah/random/ar.asad'
-    : 'https://api.alquran.cloud/v1/ayah/random/en.asad';
+function getAyahUrl(ref) {
+  return `https://api.alquran.cloud/v1/ayah/${ref}/${currentLanguage}.asad`;
 }
 
 // ===============================
@@ -28,6 +26,9 @@ const langBtn = document.getElementById('lang-btn');
 
 const homeTab = document.getElementById('home-tab');
 const bookmarksTab = document.getElementById('bookmarks-tab');
+const profileView = document.getElementById('profile-view');
+const profileTab = document.getElementById('profile-tab');
+const profileContent = document.getElementById('profile-content');
 
 // ===============================
 // ICONS
@@ -49,18 +50,42 @@ const icons = {
     bookmarksTab: {
       active: 'https://i.ibb.co/YTRkNwXh/Bookmarked-Tab-Active.png',
       inactive: 'https://i.ibb.co/TNN1j54/Bookmarked-Tab-Inactive.png'
+    },
+    profile: {
+      active: 'https://i.ibb.co/tMQq5q3K/Profile-Active.png',
+      inactive: 'https://i.ibb.co/N0jysZB/Profile-Inactive.png'
     }
   };
 
 // ===============================
 // STATE
 // ===============================
+
 let ayahHistory = [];
 let historyIndex = -1;
 let bookmarks = {};
 let shuffleEnabled = false;
 let loading = false;
+
+// Quran pointer (ORDER MODE)
+let currentSurah = 1;
+let currentAyah = 1;
+
 let currentEl = null;
+
+// ===============================
+// SURAH AYAH COUNTS
+// ===============================
+
+const surahAyahCounts = [
+  7,286,200,176,120,165,206,75,129,109,123,111,43,52,99,128,
+  111,110,98,135,112,78,118,64,77,227,93,88,69,60,34,30,
+  73,54,45,83,182,88,75,85,54,53,89,59,37,35,38,29,18,45,
+  60,49,62,55,78,96,29,22,24,13,14,11,11,18,12,12,30,52,
+  52,44,28,28,20,56,40,31,50,40,46,42,29,19,36,25,22,17,
+  19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,
+  7,3,6,3,5,4,5,6
+];
 
 // ===============================
 // PERSISTENCE
@@ -79,20 +104,49 @@ function loadState() {
   shuffleEnabled = localStorage.getItem('qiraah_shuffle') === 'true';
 }
 
+
 // ===============================
-// FETCH
+// FETCHERS
 // ===============================
+async function fetchAyahByOrder(surah, ayah) {
+  const res = await fetch(getAyahUrl(`${surah}:${ayah}`));
+  const json = await res.json();
+
+  return {
+    id: `${surah}:${ayah}`,
+    surahNumber: surah,
+    ayahNumber: ayah,
+    text: json.data.text,
+    surah: json.data.surah.englishName
+  };
+}
+
 async function fetchRandomAyah() {
-  const res = await fetch(`${getApiUrl()}?t=${Date.now()}`);
+  const res = await fetch(
+    `https://api.alquran.cloud/v1/ayah/random/${currentLanguage}.asad`
+  );
   const json = await res.json();
 
   return {
     id: `${json.data.surah.number}:${json.data.numberInSurah}`,
     surahNumber: json.data.surah.number,
     ayahNumber: json.data.numberInSurah,
-    surah: json.data.surah.englishName,
-    text: json.data.text
+    text: json.data.text,
+    surah: json.data.surah.englishName
   };
+}
+
+// ===============================
+// POINTER LOGIC
+// ===============================
+
+function getNextPointer() {
+  if (currentAyah < surahAyahCounts[currentSurah - 1]) {
+    currentAyah++;
+  } else if (currentSurah < 114) {
+    currentSurah++;
+    currentAyah = 1;
+  }
 }
 
 // ===============================
@@ -125,10 +179,18 @@ async function goNext() {
   loading = true;
 
   let nextAyah;
+
+  // HISTORY FORWARD
   if (historyIndex < ayahHistory.length - 1) {
     nextAyah = ayahHistory[historyIndex + 1];
   } else {
-    nextAyah = await fetchRandomAyah();
+    // STRICT MODE CONTROL
+    if (shuffleEnabled) {
+      nextAyah = await fetchRandomAyah();
+    } else {
+      nextAyah = await fetchAyahByOrder(currentSurah, currentAyah);
+      getNextPointer();
+    }
     ayahHistory.push(nextAyah);
   }
 
@@ -263,6 +325,11 @@ shuffleBtn.onclick = () => {
   shuffleBtn.querySelector('img').src =
     shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
   saveState();
+
+  if (!shuffleEnabled) {
+    currentSurah = ayahHistory[historyIndex]?.surahNumber || 1;
+    currentAyah = (ayahHistory[historyIndex]?.ayahNumber || 0) + 1;
+  }
 };
 
 // ===============================
@@ -293,26 +360,42 @@ langBtn.onclick = async () => {
 // BOTTOM NAV
 // ===============================
 function setActiveTab(tab) {
-    if (tab === 'home') {
-      homeTab.querySelector('img').src = icons.home.active;
-      bookmarksTab.querySelector('img').src = icons.bookmarksTab.inactive;
-    } else {
-      bookmarksTab.querySelector('img').src = icons.bookmarksTab.active;
-      homeTab.querySelector('img').src = icons.home.inactive;
-    }
-  }
+  homeTab.querySelector('img').src =
+    tab === 'home' ? icons.home.active : icons.home.inactive;
+
+  bookmarksTab.querySelector('img').src =
+    tab === 'bookmarks'
+      ? icons.bookmarksTab.active
+      : icons.bookmarksTab.inactive;
+
+  profileTab.querySelector('img').src =
+    tab === 'profile'
+      ? icons.profile.active
+      : icons.profile.inactive;
+}
 
   homeTab.onclick = () => {
     appView.style.display = 'block';
     bookmarksView.style.display = 'none';
+    profileView.style.display = 'none';
     setActiveTab('home');
   };
   
   bookmarksTab.onclick = () => {
     appView.style.display = 'none';
     bookmarksView.style.display = 'block';
+    profileView.style.display = 'none';
     setActiveTab('bookmarks');
     renderBookmarks();
+  };
+  
+  profileTab.onclick = () => {
+    appView.style.display = 'none';
+    bookmarksView.style.display = 'none';
+    profileView.style.display = 'block';
+  
+    setActiveTab('profile');
+    renderProfile();
   };
 
 // ===============================
@@ -336,18 +419,45 @@ function renderBookmarks() {
 }
 
 // ===============================
+// PROFILE VIEW (BASE)
+// ===============================
+
+function renderProfile() {
+  profileContent.innerHTML = `
+    <h2>Your Progress</h2>
+    <p style="opacity:.6">Track your Quran reading journey</p>
+
+    <div class="profile-placeholder">
+      Progress system coming soon
+    </div>
+  `;
+}
+
+// ===============================
 // INIT
 // ===============================
 loadState();
+
 shuffleBtn.querySelector('img').src =
   shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
 
-if (ayahHistory[historyIndex]) {
-  currentEl = createStoryElement(ayahHistory[historyIndex]);
+// FORCE STARTING POINT (ORDER MODE)
+if (!shuffleEnabled && ayahHistory.length === 0) {
+  currentSurah = 1;
+  currentAyah = 1;
+}
+
+// RESTORE FROM HISTORY
+if (ayahHistory.length > 0 && historyIndex >= 0) {
+  const ayah = ayahHistory[historyIndex];
+  currentSurah = ayah.surahNumber;
+  currentAyah = ayah.ayahNumber + 1;
+
+  currentEl = createStoryElement(ayah);
   app.appendChild(currentEl);
   updateBookmarkIcon();
 } else {
-  goNext();
+  goNext(); // ← this will now load 1:1
 }
 
 setActiveTab('home');
