@@ -463,3 +463,6 @@ if (ayahHistory.length > 0 && historyIndex >= 0) {
 }
 
 setActiveTab('home');
+
+localStorage.clear();
+location.reload();
