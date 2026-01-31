@@ -40,9 +40,11 @@ body {
 }
 
 .story {
+  position: relative;
+  height: 100%;
+  width: 100%;
   height: 100vh;
   scroll-snap-align: start;
-  position: absolute;
   inset: 0;
   padding: 2rem;
   display: flex;
@@ -78,11 +80,13 @@ body {
 .story-inner {
   max-width: 90%;
   text-align: center;
+  z-index: 1;
 }
 
 .ayah-text {
   font-size: 1.6rem;
   line-height: 1.9;
+  z-index: 1;
 }
 
 .fade-slide {
@@ -108,6 +112,19 @@ body {
   line-height: 1.8;
   text-align: center;
   padding: 24px;
+  z-index: 1;
+}
+
+.ayah-reference {
+  position: fixed;
+  bottom: 90px;
+  left: 20px;
+  font-size: 13px;
+  opacity: 0.75;
+  color: #fff;
+  pointer-events: none;
+  font-weight: 500;
+  z-index: 20;
 }
 
 /* All UI icons */
