@@ -1,6 +1,3 @@
-localStorage.clear();
-location.reload();
-
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
@@ -466,6 +463,3 @@ if (ayahHistory.length > 0 && historyIndex >= 0) {
 }
 
 setActiveTab('home');
-
-localStorage.clear();
-location.reload();
