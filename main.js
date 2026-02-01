@@ -18,6 +18,7 @@ function hasForwardHistory() {
 // ===============================
 // ELEMENTS
 // ===============================
+const TOTAL_AYAHS = 6236;
 const appView = document.getElementById('app-view');
 const bookmarksView = document.getElementById('bookmarks-view');
 const app = document.getElementById('app');
@@ -58,6 +59,10 @@ const icons = {
     profile: {
       active: 'https://i.ibb.co/tMQq5q3K/Profile-Active.png',
       inactive: 'https://i.ibb.co/N0jysZB/Profile-Inactive.png'
+    },
+    lang: {
+      ar: 'https://i.ibb.co/ZpFysr1M/Lang-AR-1.png',
+      en: 'https://i.ibb.co/mr1KPdpR/Lang-AR.png'
     }
   };
 
@@ -90,6 +95,58 @@ const surahAyahCounts = [
   19,26,30,20,15,21,11,8,8,19,5,8,8,11,11,8,3,9,5,4,
   7,3,6,3,5,4,5,6
 ];
+
+function getUniqueReadAyahs() {
+  const map = {};
+  ayahHistory.forEach(a => {
+    map[`${a.surahNumber}:${a.ayahNumber}`] = true;
+  });
+  return Object.keys(map);
+}
+
+function getSurahProgress() {
+  const ayah = ayahHistory[historyIndex];
+  if (!ayah) return 0;
+
+  const surahTotal = surahAyahCounts[ayah.surahNumber - 1];
+
+  const readInSurah = new Set();
+  ayahHistory.forEach(a => {
+    if (a.surahNumber === ayah.surahNumber) {
+      readInSurah.add(a.ayahNumber);
+    }
+  });
+
+  return Math.min(100, (readInSurah.size / surahTotal) * 100);
+}
+
+function getAyahProgress() {
+  const ayah = ayahHistory[historyIndex];
+  if (!ayah) return 0;
+
+  const surahTotal = surahAyahCounts[ayah.surahNumber - 1];
+  return (ayah.ayahNumber / surahTotal) * 100;
+}
+
+function getTotalProgress() {
+  const uniqueAyahs = getUniqueReadAyahs();
+  return (uniqueAyahs.length / TOTAL_AYAHS) * 100;
+}
+
+function renderProgress() {
+  const surah = getSurahProgress();
+  const ayah = getAyahProgress();
+  const total = getTotalProgress();
+
+  document.getElementById('surah-bar').style.width = `${surah}%`;
+  document.getElementById('ayah-bar').style.width = `${ayah}%`;
+  document.getElementById('total-bar').style.width = `${total}%`;
+
+  const remaining = Math.max(0, 100 - total).toFixed(2);
+
+  document.getElementById('progress-subtitle').textContent =
+    `You’ve completed a total of ${total.toFixed(2)}%, ${remaining}% more to go!`;
+}
 
 // ===============================
 // PERSISTENCE
@@ -370,21 +427,31 @@ shuffleBtn.onclick = () => {
 langBtn.onclick = async () => {
   if (loading) return;
 
+  // Toggle language
   currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
-  langBtn.querySelector('span').textContent =
-    currentLanguage === 'ar' ? 'AR' : 'EN';
+
+  // Update icon (we'll define icons in part 2)
+  langBtn.querySelector('img').src =
+    currentLanguage === 'ar'
+      ? icons.lang.ar
+      : icons.lang.en;
 
   const ayah = ayahHistory[historyIndex];
   if (!ayah) return;
 
+  // 🚨 CRITICAL: discard forward history
+  ayahHistory = ayahHistory.slice(0, historyIndex + 1);
+
   loading = true;
-  const res = await fetch(
-    `https://api.alquran.cloud/v1/ayah/${ayah.id}/${currentLanguage}.asad`
-  );
+
+  // Re-fetch CURRENT ayah in new language
+  const res = await fetch(getAyahUrl(ayah.id));
   const json = await res.json();
 
   ayah.text = json.data.text;
   currentEl.querySelector('.ayah-text').textContent = ayah.text;
+
+  saveState();
   loading = false;
 };
 
@@ -428,6 +495,7 @@ function setActiveTab(tab) {
   
     setActiveTab('profile');
     renderProfile();
+    renderProgress();
   };
 
 // ===============================
@@ -458,10 +526,6 @@ function renderProfile() {
   profileContent.innerHTML = `
     <h2>Your Progress</h2>
     <p style="opacity:.6">Track your Quran reading journey</p>
-
-    <div class="profile-placeholder">
-      Progress system coming soon
-    </div>
   `;
 }
 
@@ -486,5 +550,10 @@ if (historyIndex >= 0 && ayahHistory[historyIndex]) {
 } else {
   goNext();
 }
+
+langBtn.querySelector('img').src =
+  currentLanguage === 'ar'
+    ? icons.lang.ar
+    : icons.lang.en;
 
 setActiveTab('home');
