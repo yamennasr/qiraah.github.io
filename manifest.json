@@ -1,0 +1,22 @@
+{
+    "name": "Qiraah",
+    "short_name": "Qiraah",
+    "description": "Swipe-based Quran reading experience",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "orientation": "portrait",
+    "icons": [
+      {
+        "src": "https://i.ibb.co/0Pd1QtY/Qiraah-App-Icon.png",
+        "sizes": "1080x1080",
+        "type": "image/png"
+      },
+      {
+        "src": "https://i.ibb.co/0Pd1QtY/Qiraah-App-Icon.png",
+        "sizes": "1080x1080",
+        "type": "image/png"
+      }
+    ]
+  }
