@@ -15,9 +15,18 @@ function hasForwardHistory() {
   return historyIndex < ayahHistory.length - 1;
 }
 
+function enterApp() {
+  startView.style.display = 'none';
+  appView.style.display = 'block';
+}
+
 // ===============================
 // ELEMENTS
 // ===============================
+const startView = document.getElementById('start-view');
+const createAccountBtn = document.getElementById('create-account-btn');
+const loginBtn = document.getElementById('login-btn');
+
 const TOTAL_AYAHS = 6236;
 const appView = document.getElementById('app-view');
 const bookmarksView = document.getElementById('bookmarks-view');
@@ -64,6 +73,18 @@ const icons = {
       ar: 'https://i.ibb.co/ZpFysr1M/Lang-AR-1.png',
       en: 'https://i.ibb.co/mr1KPdpR/Lang-AR.png'
     }
+  };
+
+
+// ===============================
+// STARTING PAGE
+// ===============================
+  createAccountBtn.onclick = () => {
+    enterApp();
+  };
+  
+  loginBtn.onclick = () => {
+    enterApp();
   };
 
 // ===============================
@@ -556,4 +577,5 @@ langBtn.querySelector('img').src =
     ? icons.lang.ar
     : icons.lang.en;
 
-setActiveTab('home');
+    appView.style.display = 'none';
+    setActiveTab('home');
