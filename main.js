@@ -1,6 +1,10 @@
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
+const session = localStorage.getItem("qiraah_session");
+
+localStorage.removeItem("qiraah_session");
+
 
 // ===============================
 // API
@@ -16,8 +20,22 @@ function hasForwardHistory() {
 }
 
 function enterApp() {
-  startView.style.display = 'none';
-  appView.style.display = 'block';
+  document.getElementById("startScreen").style.display = "none";
+  document.getElementById("appView").style.display = "block";
+}
+
+function startApp() {
+  const startView = document.getElementById("start-view");
+  const appView = document.getElementById("app-view");
+
+  if (startView) {
+    startView.style.display = "none";
+    startView.style.pointerEvents = "none";
+  }
+
+  if (appView) appView.style.display = "block";
+
+  window.dispatchEvent(new Event("qiraah:start"));
 }
 
 // ===============================
@@ -79,13 +97,7 @@ const icons = {
 // ===============================
 // STARTING PAGE
 // ===============================
-  createAccountBtn.onclick = () => {
-    enterApp();
-  };
-  
-  loginBtn.onclick = () => {
-    enterApp();
-  };
+
 
 // ===============================
 // STATE
@@ -564,6 +576,16 @@ if (!shuffleEnabled && ayahHistory.length === 0) {
   currentAyah = 1;
 }
 
+window.addEventListener("qiraah:start", () => {
+  appView.style.display = 'block';
+
+  if (!currentEl) {
+    goNext();
+  }
+});
+
+
+
 if (historyIndex >= 0 && ayahHistory[historyIndex]) {
   currentEl = createStoryElement(ayahHistory[historyIndex]);
   app.appendChild(currentEl);
@@ -579,3 +601,53 @@ langBtn.querySelector('img').src =
 
     appView.style.display = 'none';
     setActiveTab('home');
+
+
+    window.addEventListener("qiraah:start", () => {
+      const appView = document.getElementById("app-view");
+      const bookmarksView = document.getElementById("bookmarks-view");
+      const profileView = document.getElementById("profile-view");
+    
+      const homeTab = document.getElementById("home-tab");
+      const bookmarksTab = document.getElementById("bookmarks-tab");
+      const profileTab = document.getElementById("profile-tab");
+    
+      function show(view) {
+        //Home
+        if (appView) appView.style.display = (view === "home") ? "block" : "none";
+    
+        //Bookmarks
+        if (bookmarksView) {
+          bookmarksView.classList.toggle("hidden", view !== "bookmarks");
+          bookmarksView.style.display = (view === "bookmarks") ? "block" : "none";
+        }
+    
+        //Profile
+        if (profileView) {
+          profileView.classList.toggle("hidden", view !== "profile");
+          profileView.style.display = (view === "profile") ? "block" : "none";
+        }
+      }
+
+      
+      if (homeTab) homeTab.onclick = () => show("home");
+      if (bookmarksTab) bookmarksTab.onclick = () => {
+        show("bookmarks");
+        if (typeof renderBookmarks === "function") renderBookmarks();
+      };
+      if (profileTab) profileTab.onclick = () => {
+        show("profile");
+        if (typeof renderProfile === "function") renderProfile();
+        if (typeof renderProgress === "function") renderProgress();
+      };
+    
+      //Default view after login
+      show("home");
+    
+      //start app feed
+      if (typeof goNext === "function") {
+        //if nothing is loaded
+        const app = document.getElementById("app");
+        if (app && app.children.length === 0) goNext();
+      }
+    });
