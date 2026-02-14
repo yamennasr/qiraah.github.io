@@ -215,6 +215,13 @@ body {
   opacity: 0.6;
 }
 
+.ayah-meta-inline{
+  margin-top: 14px;
+  text-align: center;
+  font-size: 14px;
+  opacity: 0.65;
+}
+
 .ayah-text {
   color: #fff;
   font-family: "Amiri Quran", serif;
@@ -384,13 +391,125 @@ button img {
   transition: width 0.4s ease;
 }
 
-/* UTILITY */
-.hidden {
-  display: none;
+/* Settings panel overlay */
+.settings-panel{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 18px;
+  z-index: 9999;
 }
 
-#bookmarks-view, #profile-view {
-  display: none;
+.settings-card{
+  width: 100%;
+  max-width: 480px;
+  background: rgba(0,0,0,0.85);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 18px;
+  padding: 16px;
+  color: #fff;
+  margin-top: 18px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.settings-header{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.settings-close{
+  background: transparent;
+  border: none;
+  color: rgba(255,255,255,0.8);
+  font-size: 18px;
+}
+
+.settings-row{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  padding: 14px 0;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  gap: 14px;
+}
+
+.settings-title{ font-size: 14px; }
+.settings-sub{ font-size: 12px; opacity: 0.6; margin-top: 2px; }
+
+/* Simple iOS-like switch */
+.switch { position: relative; width: 48px; height: 28px; display:inline-block; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider{
+  position:absolute; inset:0;
+  background: rgba(255,255,255,0.18);
+  border-radius: 999px;
+  transition: .2s;
+}
+.slider:before{
+  content:"";
+  position:absolute; height: 22px; width: 22px;
+  left: 3px; top: 3px;
+  background:#fff;
+  border-radius: 50%;
+  transition: .2s;
+}
+.switch input:checked + .slider{
+  background: rgba(255,255,255,0.35);
+}
+.switch input:checked + .slider:before{
+  transform: translateX(20px);
+}
+
+/* Segmented buttons */
+.segmented{
+  display:flex;
+  gap: 8px;
+}
+.segmented button{
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+}
+.segmented button.active{
+  background: rgba(255,255,255,0.22);
+  border-color: rgba(255,255,255,0.35);
+}
+
+/* Settings icon button in profile */
+.profile-topbar{
+  display:flex;
+  align-items:center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.settings-icon-btn{
+  background: transparent;
+  border: none;
+  padding: 6px;
+}
+.settings-icon-btn img{
+  width: 26px;
+  height: 26px;
+  opacity: 0.9;
+}
+
+/* UTILITY */
+
+
+#bookmarks-view, #profile-view{
+  background:#000;
+  color:#fff;
+  min-height:100vh;
+  padding:18px 16px 90px;
+  box-sizing:border-box;
 }
 
 #bookmarks-view:not(.hidden),
@@ -402,3 +521,24 @@ button img {
   padding: 18px 16px 90px;
   box-sizing: border-box;
 }
+
+/* --- FIX: make views full-screen layers --- */
+#app-view,
+#bookmarks-view,
+#profile-view,
+#start-view {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Put Bookmarks/Profile above Home view */
+#app-view { z-index: 100; }
+#bookmarks-view, #profile-view { z-index: 200; }
+
+/* Bottom nav stays above all */
+.bottom-nav { z-index: 9999; }
+
+/* Ensure app-view doesn't block when hidden */
+#app-view[style*="display: none"] { pointer-events: none; }
