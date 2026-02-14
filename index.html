@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#000000">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Qiraah Swipe</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="/static/style.css" />
   
 </head>
 <body>
@@ -77,15 +77,6 @@
         <p class="side-text">Copy</p>
       </button>
 
-      <button id="shuffle-btn">
-        <img src="https://i.ibb.co/215F5LQ3/Shuffle-Active.png" alt="Shuffle">
-        <p class="side-text">Shuffle</p>
-      </button>
-
-      <button id="lang-btn">
-        <img src="https://i.ibb.co/ZpFysr1M/Lang-AR-1.png" alt="Lang">
-        <p class="side-text">Language</p>
-      </button>
     </div>
 
     <div id="ayah-reference" class="ayah-reference"></div>
@@ -101,6 +92,39 @@
   <!-- PROFILE VIEW -->
 <div id="profile-view" class="hidden">
   <div id="profile-content"></div>
+
+  <!-- SETTINGS PANEL (hidden by default) -->
+<div id="settings-panel" class="settings-panel hidden">
+  <div class="settings-card">
+    <div class="settings-header">
+      <h3>Settings</h3>
+      <button id="settings-close" class="settings-close">✕</button>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-title">Shuffle mode</div>
+        <div class="settings-sub">Random verses when enabled</div>
+      </div>
+      <label class="switch">
+        <input id="settings-shuffle" type="checkbox" />
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div class="settings-row">
+      <div>
+        <div class="settings-title">Language</div>
+        <div class="settings-sub">Arabic / English</div>
+      </div>
+
+      <div class="segmented">
+        <button id="lang-ar" type="button">AR</button>
+        <button id="lang-en" type="button">EN</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <div class="progress-container">
     <div class="progress-bar">
@@ -140,7 +164,7 @@
     </button>
   </nav>
 
-  <script src="auth.js"></script>
-  <script src="main.js"></script>
+  <script src="/static/auth.js"></script>
+  <script src="/static/main.js"></script>
 </body>
 </html>
