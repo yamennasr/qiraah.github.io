@@ -15,6 +15,7 @@ window.addEventListener("DOMContentLoaded", () => {
   const loginPass = document.getElementById("login-pass");
 
   const errorEl = document.getElementById("auth-error");
+  
 
   // ---- Local accounts storage ----
   function loadUsers() {
@@ -114,3 +115,4 @@ window.addEventListener("DOMContentLoaded", () => {
     startView.style.display = "flex";
   }
 });
+
