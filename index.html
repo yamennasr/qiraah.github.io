@@ -6,11 +6,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Amiri+Quran&display=swap" rel="stylesheet">
   <meta charset="UTF-8" />
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="/template/manifest.json">
   <meta name="theme-color" content="#000000">
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Qiraah Swipe</title>
   <link rel="stylesheet" href="style.css" />
+  
 </head>
 <body>
 
@@ -32,6 +33,28 @@
       <button id="login-btn" class="start-btn">
         Login
       </button>
+      
+
+      <!-- AUTH FORMS -->
+<div id="auth-forms" class="auth-forms hidden">
+  
+  <!-- SIGNUP FORM -->
+  <form id="signup-form" class="auth-form hidden">
+    <input id="signup-name" type="text" placeholder="Username" required />
+    <input id="signup-pass" type="password" placeholder="Password" required />
+    <button type="submit" class="start-btn">Create Account</button>
+  </form>
+
+  <!-- LOGIN FORM -->
+  <form id="login-form" class="auth-form hidden">
+    <input id="login-name" type="text" placeholder="Username" required />
+    <input id="login-pass" type="password" placeholder="Password" required />
+    <button type="submit" class="start-btn">Login</button>
+  </form>
+
+  <p id="auth-error" class="auth-error hidden"></p>
+
+</div>
   
     </div>
   </div>
@@ -117,6 +140,7 @@
     </button>
   </nav>
 
+  <script src="auth.js"></script>
   <script src="main.js"></script>
 </body>
 </html>
