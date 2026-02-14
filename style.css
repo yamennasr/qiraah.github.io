@@ -12,14 +12,19 @@ body {
   overflow: hidden;
 }
 
+#start-view[style*="display: none"] {
+  pointer-events: none;
+}
+
 .start-view {
   position: fixed;
+  height: 100%;
   inset: 0;
   background: linear-gradient(#272727, #000000);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 9999;
+  z-index: 100;
 }
 
 .start-content {
@@ -55,6 +60,21 @@ body {
   cursor: pointer;
 }
 
+#auth-view {
+  position: fixed;
+  inset: 0;
+  background: black;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+}
+
+#app-view {
+  display: none;
+}
+
 #create-account-btn {
   background: white;
   color: black;
@@ -73,6 +93,36 @@ body {
 .start-btn:active {
   transform: scale(0.98);
 }
+
+.auth-forms {
+  width: 100%;
+  margin-top: 10px;
+}
+
+.auth-form input {
+  width: 100%;
+  padding: 14px;
+  margin-bottom: 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: white;
+  outline: none;
+  font-size: 14px;
+}
+
+.auth-form input::placeholder {
+  color: rgba(255,255,255,0.6);
+}
+
+.auth-error {
+  color: #ff6b6b;
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+.hidden { display: none !important; }
 
 /* MAIN VIEW */
 #app-view {
@@ -240,8 +290,8 @@ button img {
   justify-content: space-around;
   align-items: center;
 
-  z-index: 9999;
-  pointer-events: auto;
+  z-index: 9999;          /* 🔴 critical */
+  pointer-events: auto;  /* 🔴 critical */
 }
 
 .bottom-nav button {
@@ -337,4 +387,18 @@ button img {
 /* UTILITY */
 .hidden {
   display: none;
+}
+
+#bookmarks-view, #profile-view {
+  display: none;
+}
+
+#bookmarks-view:not(.hidden),
+#profile-view:not(.hidden) {
+  display: block;
+  background: #000;
+  color: #fff;
+  min-height: 100vh;
+  padding: 18px 16px 90px;
+  box-sizing: border-box;
 }
