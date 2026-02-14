@@ -255,6 +255,7 @@ function createStoryElement(ayah) {
   el.innerHTML = `
     <div class="story-inner">
       <p class="ayah-text">${ayah.text}</p>
+      <div class="ayah-meta-inline">${ayah.surah} · Ayah ${ayah.ayahNumber}</div>
     </div>
   `;
 
@@ -440,24 +441,28 @@ copyBtn.onclick = () => {
 // ===============================
 // SHUFFLE
 // ===============================
-shuffleBtn.onclick = () => {
-  shuffleEnabled = !shuffleEnabled;
+if (shuffleBtn) {
+  shuffleBtn.onclick = () => {
+    shuffleEnabled = !shuffleEnabled;
 
-  shuffleBtn.querySelector('img').src =
-    shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
+    // (button is removed now, but if you ever bring it back, this keeps working)
+    const img = shuffleBtn.querySelector('img');
+    if (img) img.src = shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
 
-  if (shuffleEnabled) {
-    // 🚨 CRITICAL: discard forward history
-    ayahHistory = ayahHistory.slice(0, historyIndex + 1);
-  }
+    if (shuffleEnabled) {
+      ayahHistory = ayahHistory.slice(0, historyIndex + 1);
+    }
 
-  saveState();
-};
+    saveState?.();
+    saveUserData?.();
+  };
+}
 
 // ===============================
 // LANGUAGE TOGGLE
 // ===============================
-langBtn.onclick = async () => {
+if (langBtn) {
+  langBtn.onclick = async () => {
   if (loading) return;
 
   // Toggle language
@@ -487,6 +492,7 @@ langBtn.onclick = async () => {
   saveState();
   loading = false;
 };
+}
 
 // ===============================
 // BOTTOM NAV
@@ -554,12 +560,125 @@ function renderBookmarks() {
 // ===============================
 // PROFILE VIEW (BASE)
 // ===============================
-
 function renderProfile() {
   profileContent.innerHTML = `
-    <h2>Your Progress</h2>
-    <p style="opacity:.6">Track your Quran reading journey</p>
+    <div class="profile-topbar">
+      <div>
+        <h2>Your Progress</h2>
+        <p style="opacity:.6">Track your Quran reading journey</p>
+      </div>
+
+      <button id="settings-btn" class="settings-icon-btn" aria-label="Settings">
+        <img src="https://i.ibb.co/7NTJSLVk/Settings.png" alt="Settings">
+      </button>
+    </div>
   `;
+
+  wireSettingsUI();   // <— add this line
+}
+
+function openSettings() {
+  const panel = document.getElementById("settings-panel");
+  if (panel) panel.classList.remove("hidden");
+}
+
+function closeSettings() {
+  const panel = document.getElementById("settings-panel");
+  if (panel) panel.classList.add("hidden");
+}
+
+function markLangActive() {
+  const arBtn = document.getElementById("lang-ar");
+  const enBtn = document.getElementById("lang-en");
+  if (!arBtn || !enBtn) return;
+
+  arBtn.classList.toggle("active", currentLanguage === "ar");
+  enBtn.classList.toggle("active", currentLanguage === "en");
+}
+
+/**
+ * Keep functionality without touching swipe engine:
+ * - shuffleEnabled toggled here
+ * - language changed here (future verses will follow)
+ */
+async function setLanguage(lang) {
+  if (loading) return;
+  if (lang !== "ar" && lang !== "en") return;
+  if (currentLanguage === lang) return;
+
+  currentLanguage = lang;
+  markLangActive();
+
+  // Optional but nice: re-fetch CURRENT ayah text in new language
+  const ayah = ayahHistory?.[historyIndex];
+  if (!ayah) {
+    saveState?.(); saveUserData?.();
+    return;
+  }
+
+  loading = true;
+  try {
+    // Discard forward history so upcoming verses are in the new language
+    if (Array.isArray(ayahHistory)) ayahHistory = ayahHistory.slice(0, historyIndex + 1);
+
+    const res = await fetch(getAyahUrl(ayah.id));
+    const json = await res.json();
+
+    ayah.text = json.data.text;
+
+    // Update on-screen text if present
+    if (currentEl) {
+      const t = currentEl.querySelector(".ayah-text");
+      if (t) t.textContent = ayah.text;
+    }
+
+    saveState?.(); saveUserData?.();
+  } finally {
+    loading = false;
+  }
+}
+
+function setShuffle(enabled) {
+  shuffleEnabled = !!enabled;
+
+  // When turning shuffle ON, discard forward history so we don't loop/reuse
+  if (shuffleEnabled && Array.isArray(ayahHistory)) {
+    ayahHistory = ayahHistory.slice(0, historyIndex + 1);
+  }
+
+  saveState?.();
+  saveUserData?.();
+}
+
+function wireSettingsUI() {
+  const btn = document.getElementById("settings-btn");
+  const closeBtn = document.getElementById("settings-close");
+  const panel = document.getElementById("settings-panel");
+
+  const shuffleToggle = document.getElementById("settings-shuffle");
+  const arBtn = document.getElementById("lang-ar");
+  const enBtn = document.getElementById("lang-en");
+
+  if (btn) btn.onclick = openSettings;
+  if (closeBtn) closeBtn.onclick = closeSettings;
+
+  // close if user taps outside the card
+  if (panel) {
+    panel.addEventListener("click", (e) => {
+      if (e.target === panel) closeSettings();
+    });
+  }
+
+  // reflect current state
+  if (shuffleToggle) shuffleToggle.checked = !!shuffleEnabled;
+  markLangActive();
+
+  if (shuffleToggle) {
+    shuffleToggle.onchange = () => setShuffle(shuffleToggle.checked);
+  }
+
+  if (arBtn) arBtn.onclick = () => setLanguage("ar");
+  if (enBtn) enBtn.onclick = () => setLanguage("en");
 }
 
 // ===============================
@@ -567,8 +686,10 @@ function renderProfile() {
 // ===============================
 loadState();
 
-shuffleBtn.querySelector('img').src =
-  shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
+if (shuffleBtn) {
+  const img = shuffleBtn.querySelector('img');
+  if (img) img.src = shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
+}
 
 // FORCE STARTING POINT (ORDER MODE)
 if (!shuffleEnabled && ayahHistory.length === 0) {
@@ -584,8 +705,6 @@ window.addEventListener("qiraah:start", () => {
   }
 });
 
-
-
 if (historyIndex >= 0 && ayahHistory[historyIndex]) {
   currentEl = createStoryElement(ayahHistory[historyIndex]);
   app.appendChild(currentEl);
@@ -594,10 +713,10 @@ if (historyIndex >= 0 && ayahHistory[historyIndex]) {
   goNext();
 }
 
-langBtn.querySelector('img').src =
-  currentLanguage === 'ar'
-    ? icons.lang.ar
-    : icons.lang.en;
+if (langBtn) {
+  const img = langBtn.querySelector('img');
+  if (img) img.src = currentLanguage === 'ar' ? icons.lang.ar : icons.lang.en;
+}
 
     appView.style.display = 'none';
     setActiveTab('home');
@@ -611,43 +730,78 @@ langBtn.querySelector('img').src =
       const homeTab = document.getElementById("home-tab");
       const bookmarksTab = document.getElementById("bookmarks-tab");
       const profileTab = document.getElementById("profile-tab");
-    
-      function show(view) {
-        //Home
-        if (appView) appView.style.display = (view === "home") ? "block" : "none";
-    
-        //Bookmarks
-        if (bookmarksView) {
-          bookmarksView.classList.toggle("hidden", view !== "bookmarks");
-          bookmarksView.style.display = (view === "bookmarks") ? "block" : "none";
-        }
-    
-        //Profile
-        if (profileView) {
-          profileView.classList.toggle("hidden", view !== "profile");
-          profileView.style.display = (view === "profile") ? "block" : "none";
-        }
-      }
 
+      const tabIcons = {
+        home: {
+          active: "https://i.ibb.co/LdPFz7HY/Home-Active.png",
+          inactive: "https://i.ibb.co/6c6K6YDC/Home-Inactive.png"
+        },
+        bookmarks: {
+          active: "https://i.ibb.co/YTRkNwXh/Bookmarked-Tab-Active.png",
+          inactive: "https://i.ibb.co/TNN1j54/Bookmarked-Tab-Inactive.png"
+        },
+        profile: {
+          active: "https://i.ibb.co/tMQq5q3K/Profile-Active.png",
+          inactive: "https://i.ibb.co/N0jysZB/Profile-Inactive.png"
+        }
+      };
       
-      if (homeTab) homeTab.onclick = () => show("home");
-      if (bookmarksTab) bookmarksTab.onclick = () => {
-        show("bookmarks");
-        if (typeof renderBookmarks === "function") renderBookmarks();
-      };
-      if (profileTab) profileTab.onclick = () => {
-        show("profile");
-        if (typeof renderProfile === "function") renderProfile();
-        if (typeof renderProgress === "function") renderProgress();
-      };
-    
-      //Default view after login
-      show("home");
-    
-      //start app feed
-      if (typeof goNext === "function") {
-        //if nothing is loaded
-        const app = document.getElementById("app");
-        if (app && app.children.length === 0) goNext();
+      function hardShow(view) {
+        // Always close settings if open (prevents black overlay)
+        const settingsPanel = document.getElementById("settings-panel");
+        if (settingsPanel) settingsPanel.classList.add("hidden");
+      
+        // Hide everything first (hard)
+        if (appView) appView.style.display = "none";
+        if (bookmarksView) {
+          bookmarksView.style.display = "none";
+          bookmarksView.classList.add("hidden");
+        }
+        if (profileView) {
+          profileView.style.display = "none";
+          profileView.classList.add("hidden");
+        }
+      
+        // Show the requested view
+        if (view === "home") {
+          if (appView) appView.style.display = "block";
+        }
+      
+        if (view === "bookmarks") {
+          if (bookmarksView) {
+            bookmarksView.classList.remove("hidden");
+            bookmarksView.style.display = "block";
+          }
+          if (typeof renderBookmarks === "function") renderBookmarks();
+        }
+      
+        if (view === "profile") {
+          if (profileView) {
+            profileView.classList.remove("hidden");
+            profileView.style.display = "block";
+          }
+          if (typeof renderProfile === "function") renderProfile();
+          if (typeof renderProgress === "function") renderProgress();
+        }
       }
+      
+      // Tabs
+      if (homeTab) homeTab.onclick = () => {
+        hardShow("home");
+        if (typeof setActiveTab === "function") setActiveTab("home");
+      };
+      
+      if (bookmarksTab) bookmarksTab.onclick = () => {
+        hardShow("bookmarks");
+        if (typeof setActiveTab === "function") setActiveTab("bookmarks");
+      };
+      
+      if (profileTab) profileTab.onclick = () => {
+        hardShow("profile");
+        if (typeof setActiveTab === "function") setActiveTab("profile");
+      };
+      
+      // Default
+      hardShow("home");
+      if (typeof setActiveTab === "function") setActiveTab("home");
     });
