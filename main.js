@@ -2,7 +2,6 @@
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
 
-// TikTok-ish swipe timing (fast, no fading)
 const SWIPE_MS = 320;
 const SWIPE_EASE = 'cubic-bezier(.2,.8,.2,1)';
 
@@ -38,7 +37,7 @@ function startApp() {
 // ELEMENTS
 // ===============================
 const startView = document.getElementById('start-view');
-// --- Safe persistence helper (works whether user system exists or not) ---
+
 function persistAppState() {
   try { if (typeof saveState === "function") saveState(); } catch (_) {}
   try { if (typeof saveUserData === "function") saveUserData(); } catch (_) {}
@@ -252,16 +251,26 @@ function getNextPointer() {
 function createStoryElement(ayah) {
   const el = document.createElement('div');
   el.className = 'story';
-  // Make stories behave like TikTok cards (overlapping full-screen)
+  
   el.style.position = 'absolute';
   el.style.inset = '0';
   el.style.width = '100%';
   el.style.height = '100%';
 
+  const cleanSurahAr = (name) =>
+    String(name || "")
+      .replace(/^\s*(سورة|سُورَةُ)\s*/u, "") 
+      .trim();
+
+  const surahName =
+    currentLanguage === "ar"
+      ? cleanSurahAr(ayah.surah)
+      : ayah.surah;
+
   const metaLabel =
     currentLanguage === 'ar'
-      ? `سورة ${ayah.surah} · آية ${ayah.ayahNumber}`
-      : `${ayah.surah} · Ayah ${ayah.ayahNumber}`;
+      ? `سورة ${surahName} · آية ${ayah.ayahNumber}`
+      : `${surahName} · Ayah ${ayah.ayahNumber}`;
 
   el.innerHTML = `
     <div class="story-inner">
@@ -339,7 +348,6 @@ async function goNext() {
     currentEl = nextEl;
   
     updateBookmarkIcon();
-    // bottom-left reference removed; meta is centered under the ayah
     persistAppState();
   
     loading = false;
@@ -455,7 +463,7 @@ if (langBtn) {
   // Toggle language
   currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
 
-  // Update icon (we'll define icons in part 2)
+
   langBtn.querySelector('img').src =
     currentLanguage === 'ar'
       ? icons.lang.ar
@@ -464,7 +472,7 @@ if (langBtn) {
   const ayah = ayahHistory[historyIndex];
   if (!ayah) return;
 
-  // 🚨 CRITICAL: discard forward history
+
   ayahHistory = ayahHistory.slice(0, historyIndex + 1);
 
   loading = true;
@@ -572,7 +580,7 @@ function renderProfile() {
     </div>
   `;
 
-  wireSettingsUI();   // <— add this line
+  wireSettingsUI();
 }
 
 function openSettings() {
@@ -594,11 +602,6 @@ function markLangActive() {
   enBtn.classList.toggle("active", currentLanguage === "en");
 }
 
-/**
- * Keep functionality without touching swipe engine:
- * - shuffleEnabled toggled here
- * - language changed here (future verses will follow)
- */
 async function setLanguage(lang) {
   if (loading) return;
   if (lang !== "ar" && lang !== "en") return;
@@ -608,7 +611,7 @@ async function setLanguage(lang) {
   markLangActive();
   persistAppState();
 
-  // Optional but nice: re-fetch CURRENT ayah text in new language
+
   const ayah = ayahHistory?.[historyIndex];
   if (!ayah) {
     persistAppState();
@@ -617,7 +620,7 @@ async function setLanguage(lang) {
 
   loading = true;
   try {
-    // Discard forward history so upcoming verses are in the new language
+   
     if (Array.isArray(ayahHistory)) ayahHistory = ayahHistory.slice(0, historyIndex + 1);
 
     const res = await fetch(getAyahUrl(ayah.id));
@@ -625,7 +628,7 @@ async function setLanguage(lang) {
 
     ayah.text = json.data.text;
 
-    // Update on-screen text if present
+
     if (currentEl) {
       const t = currentEl.querySelector(".ayah-text");
       if (t) t.textContent = ayah.text;
@@ -640,7 +643,6 @@ async function setLanguage(lang) {
 function setShuffle(enabled) {
   shuffleEnabled = !!enabled;
 
-  // When turning shuffle ON, discard forward history so we don't loop/reuse
   if (shuffleEnabled && Array.isArray(ayahHistory)) {
     ayahHistory = ayahHistory.slice(0, historyIndex + 1);
   }
@@ -661,14 +663,12 @@ function wireSettingsUI() {
   if (btn) btn.onclick = openSettings;
   if (closeBtn) closeBtn.onclick = closeSettings;
 
-  // close if user taps outside the card
   if (panel) {
     panel.addEventListener("click", (e) => {
       if (e.target === panel) closeSettings();
     });
   }
 
-  // reflect current state
   if (shuffleToggle) shuffleToggle.checked = !!shuffleEnabled;
   markLangActive();
 
@@ -683,13 +683,12 @@ function wireSettingsUI() {
 // ===============================
 // INIT
 // ===============================
-// ensure swipe engine doesn't fight native scrolling
 if (app) {
   app.style.position = 'relative';
   app.style.overflow = 'hidden';
 }
 
-// Old bottom-left reference (deprecated)
+
 const ayahReferenceEl = document.getElementById('ayah-reference');
 if (ayahReferenceEl) ayahReferenceEl.style.display = 'none';
 
@@ -700,7 +699,7 @@ if (shuffleBtn) {
   if (img) img.src = shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
 }
 
-// FORCE STARTING POINT (ORDER MODE)
+
 if (!shuffleEnabled && ayahHistory.length === 0) {
   currentSurah = 1;
   currentAyah = 1;
@@ -747,11 +746,11 @@ if (langBtn) {
       };
       
       function hardShow(view) {
-        // Always close settings if open (prevents black overlay)
+
         const settingsPanel = document.getElementById("settings-panel");
         if (settingsPanel) settingsPanel.classList.add("hidden");
       
-        // Hide everything first (hard)
+       
         if (appView) appView.style.display = "none";
         if (bookmarksView) {
           bookmarksView.style.display = "none";
@@ -762,7 +761,7 @@ if (langBtn) {
           profileView.classList.add("hidden");
         }
       
-        // Show the requested view
+        
         if (view === "home") {
           if (appView) appView.style.display = "block";
         }
