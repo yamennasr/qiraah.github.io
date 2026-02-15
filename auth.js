@@ -1,6 +1,9 @@
+console.log("AUTH BEFORE:", localStorage.getItem("qiraah_session"));
+
 window.addEventListener("DOMContentLoaded", () => {
-  // Use your real auth UI container
+  console.log("AUTH sees session:", localStorage.getItem("qiraah_session"));
   const startView = document.getElementById("start-view");
+  const appView = document.getElementById("app-view");
 
   const createBtn = document.getElementById("create-account-btn");
   const loginBtn = document.getElementById("login-btn");
@@ -15,9 +18,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const loginPass = document.getElementById("login-pass");
 
   const errorEl = document.getElementById("auth-error");
-  
 
-  // ---- Local accounts storage ----
+  if (!startView || !appView) {
+    console.error("auth.js: Missing #start-view or #app-view in HTML.");
+    return;
+  }
+
+  // ---- Users storage ----
   function loadUsers() {
     return JSON.parse(localStorage.getItem("qiraah_users") || "[]");
   }
@@ -36,83 +43,117 @@ window.addEventListener("DOMContentLoaded", () => {
     errorEl.classList.add("hidden");
   }
 
-  function startAppWithSession(username) {
+  function showStart() {
+    // show auth/start view
+    startView.style.display = "flex";
+    startView.style.pointerEvents = "auto";
+
+    // hide app view (CSS default might already do this)
+    appView.style.display = "none";
+
+    // hide forms until user chooses
+    if (formsWrap) formsWrap.classList.add("hidden");
+    if (signupForm) signupForm.classList.add("hidden");
+    if (loginForm) loginForm.classList.add("hidden");
+    clearError();
+  }
+
+  function enterAppWithSession(username) {
+    // persist session
     localStorage.setItem("qiraah_session", username);
 
-    // hide start screen
+    // hide start view completely (cannot block clicks)
     startView.style.display = "none";
     startView.style.pointerEvents = "none";
 
-    // tell main.js to start
+    // IMPORTANT: show app view (your CSS often hides it by default)
+    appView.style.display = "block";
+
+    // kick main.js boot
     window.dispatchEvent(new Event("qiraah:start"));
   }
 
   function showSignup() {
     clearError();
-    formsWrap.classList.remove("hidden");
-    signupForm.classList.remove("hidden");
-    loginForm.classList.add("hidden");
-    signupName.focus();
+    if (formsWrap) formsWrap.classList.remove("hidden");
+    if (signupForm) signupForm.classList.remove("hidden");
+    if (loginForm) loginForm.classList.add("hidden");
+    if (signupName) signupName.focus();
   }
 
   function showLogin() {
     clearError();
-    formsWrap.classList.remove("hidden");
-    loginForm.classList.remove("hidden");
-    signupForm.classList.add("hidden");
-    loginName.focus();
+    if (formsWrap) formsWrap.classList.remove("hidden");
+    if (loginForm) loginForm.classList.remove("hidden");
+    if (signupForm) signupForm.classList.add("hidden");
+    if (loginName) loginName.focus();
   }
 
-  // ---- Button actions (show forms) ----
-  createBtn.addEventListener("click", showSignup);
-  loginBtn.addEventListener("click", showLogin);
+  // Buttons (show forms)
+  if (createBtn) createBtn.addEventListener("click", showSignup);
+  if (loginBtn) loginBtn.addEventListener("click", showLogin);
 
-  // ---- Signup submit ----
-  signupForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    clearError();
+  // Signup submit
+  if (signupForm) {
+    signupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      clearError();
 
-    const u = signupName.value.trim();
-    const p = signupPass.value;
+      const u = (signupName?.value || "").trim();
+      const p = signupPass?.value || "";
 
-    if (u.length < 3) return showError("Username must be at least 3 characters.");
-    if (p.length < 4) return showError("Password must be at least 4 characters.");
+      if (u.length < 3) return showError("Username must be at least 3 characters.");
+      if (p.length < 4) return showError("Password must be at least 4 characters.");
 
-    const users = loadUsers();
-    if (users.some(x => x.name.toLowerCase() === u.toLowerCase())) {
-      return showError("This username is already taken.");
-    }
+      const users = loadUsers();
+      if (users.some(x => (x.name || "").toLowerCase() === u.toLowerCase())) {
+        return showError("This username is already taken.");
+      }
 
-    users.push({ name: u, pass: p });
-    saveUsers(users);
+      users.push({ name: u, pass: p });
+      saveUsers(users);
 
-    startAppWithSession(u);
-  });
+      enterAppWithSession(u);
+    });
+  }
 
-  // ---- Login submit ----
-  loginForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    clearError();
+  // Login submit
+  if (loginForm) {
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      clearError();
 
-    const u = loginName.value.trim();
-    const p = loginPass.value;
+      const u = (loginName?.value || "").trim();
+      const p = loginPass?.value || "";
 
-    const users = loadUsers();
-    const found = users.find(x => x.name.toLowerCase() === u.toLowerCase() && x.pass === p);
+      const users = loadUsers();
+      const found = users.find(
+        x => (x.name || "").toLowerCase() === u.toLowerCase() && x.pass === p
+      );
 
-    if (!found) return showError("Incorrect username or password.");
+      if (!found) return showError("Incorrect username or password.");
 
-    startAppWithSession(found.name);
-  });
+      enterAppWithSession(found.name);
+    });
+  }
 
-  // ---- Auto-enter if session already exists ----
+  // ---- Auto-enter if session exists and user exists ----
   const session = localStorage.getItem("qiraah_session");
   if (session) {
-    startView.style.display = "none";
-    window.dispatchEvent(new Event("qiraah:start"));
-  } else {
-    // show start screen
-    startView.style.display = "flex";
-  }
-});
+    const users = loadUsers();
+    const exists = users.some(
+      x => (x.name || "").toLowerCase() === session.toLowerCase()
+    );
 
+    if (exists) {
+      // IMPORTANT: use the SAME flow as login/signup
+      enterAppWithSession(session);
+      return;
+    } else {
+      // stale session
+      localStorage.removeItem("qiraah_session");
+    }
+  }
+
+  showStart();
+});
