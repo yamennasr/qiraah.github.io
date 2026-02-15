@@ -1,8 +1,10 @@
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
-console.log("MAIN BEFORE:", localStorage.getItem("qiraah_session"));
-console.log("MAIN sees session:", localStorage.getItem("qiraah_session"));
+
+// TikTok-ish swipe timing (fast, no fading)
+const SWIPE_MS = 320;
+const SWIPE_EASE = 'cubic-bezier(.2,.8,.2,1)';
 
 // ===============================
 // API
@@ -43,10 +45,6 @@ function persistAppState() {
 }
 const createAccountBtn = document.getElementById('create-account-btn');
 const loginBtn = document.getElementById('login-btn');
-
-// TikTok-ish timing
-const SWIPE_MS = 320;
-const SWIPE_EASE = "cubic-bezier(.2,.8,.2,1)";
 
 const TOTAL_AYAHS = 6236;
 const appView = document.getElementById('app-view');
@@ -216,7 +214,7 @@ async function fetchAyahByOrder(surah, ayah) {
     surahNumber: surah,
     ayahNumber: ayah,
     text: json.data.text,
-    surah: json.data.surah.englishName
+    surah: currentLanguage === 'ar' ? json.data.surah.name : json.data.surah.englishName
   };
 }
 
@@ -231,7 +229,7 @@ async function fetchRandomAyah() {
     surahNumber: json.data.surah.number,
     ayahNumber: json.data.numberInSurah,
     text: json.data.text,
-    surah: json.data.surah.englishName
+    surah: currentLanguage === 'ar' ? json.data.surah.name : json.data.surah.englishName
   };
 }
 
@@ -254,11 +252,21 @@ function getNextPointer() {
 function createStoryElement(ayah) {
   const el = document.createElement('div');
   el.className = 'story';
+  // Make stories behave like TikTok cards (overlapping full-screen)
+  el.style.position = 'absolute';
+  el.style.inset = '0';
+  el.style.width = '100%';
+  el.style.height = '100%';
+
+  const metaLabel =
+    currentLanguage === 'ar'
+      ? `سورة ${ayah.surah} · آية ${ayah.ayahNumber}`
+      : `${ayah.surah} · Ayah ${ayah.ayahNumber}`;
 
   el.innerHTML = `
     <div class="story-inner">
       <p class="ayah-text">${ayah.text}</p>
-      <div class="ayah-meta-inline">${ayah.surah} · Ayah ${ayah.ayahNumber}</div>
+      <div class="ayah-meta-inline">${metaLabel}</div>
     </div>
   `;
 
@@ -315,22 +323,15 @@ async function goNext() {
   // ===============================
   const nextEl = createStoryElement(nextAyah);
   nextEl.style.transform = 'translateY(100%)';
-  nextEl.style.opacity = '0';
   app.appendChild(nextEl);
 
   requestAnimationFrame(() => {
-    nextEl.style.transition =
-    `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
-
+    nextEl.style.transition = `transform ${SWIPE_MS}ms ${SWIPE_EASE}`;
     if (currentEl) {
-      currentEl.style.transition =
-      `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
-      currentEl.style.transform = 'translateY(-25%)';
-      currentEl.style.opacity = '0';
+      currentEl.style.transition = `transform ${SWIPE_MS}ms ${SWIPE_EASE}`;
+      currentEl.style.transform = 'translateY(-100%)';
     }
-
     nextEl.style.transform = 'translateY(0)';
-    nextEl.style.opacity = '1';
   });
 
   setTimeout(() => {
@@ -338,7 +339,8 @@ async function goNext() {
     currentEl = nextEl;
   
     updateBookmarkIcon();
-    updateAyahReference(ayahHistory[historyIndex]);
+    // bottom-left reference removed; meta is centered under the ayah
+    persistAppState();
   
     loading = false;
   }, SWIPE_MS + 30);
@@ -352,24 +354,15 @@ function goPrevious() {
   const prevEl = createStoryElement(prevAyah);
 
   prevEl.style.transform = 'translateY(-100%)';
-  prevEl.style.opacity = '0';
   app.appendChild(prevEl);
 
   requestAnimationFrame(() => {
-    prevEl.style.transition =
-    `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
+    prevEl.style.transition = `transform ${SWIPE_MS}ms ${SWIPE_EASE}`;
     if (currentEl) {
-      currentEl.style.transition =
-      `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
+      currentEl.style.transition = `transform ${SWIPE_MS}ms ${SWIPE_EASE}`;
+      currentEl.style.transform = 'translateY(100%)';
     }
-
     prevEl.style.transform = 'translateY(0)';
-    prevEl.style.opacity = '1';
-
-    if (currentEl) {
-      currentEl.style.transform = 'translateY(25%)';
-      currentEl.style.opacity = '0';
-    }
   });
 
   setTimeout(() => {
@@ -378,18 +371,10 @@ function goPrevious() {
     historyIndex--;
   
     updateBookmarkIcon();
-    updateAyahReference(ayahHistory[historyIndex]);
+    persistAppState();
   
     loading = false;
   }, SWIPE_MS + 30);
-}
-
-const ayahReferenceEl = document.getElementById('ayah-reference');
-
-function updateAyahReference(ayah) {
-  if (!ayah) return;
-  ayahReferenceEl.textContent =
-    `${ayah.surah} · Ayah ${ayah.ayahNumber}`;
 }
 
 // ===============================
@@ -411,7 +396,7 @@ app.addEventListener('touchend', e => {
 app.addEventListener('wheel', e => {
   if (Math.abs(e.deltaY) < 20) return;
   e.deltaY > 0 ? goNext() : goPrevious();
-});
+}, { passive: true });
 
 // ===============================
 // BOOKMARKS
@@ -456,8 +441,7 @@ if (shuffleBtn) {
       ayahHistory = ayahHistory.slice(0, historyIndex + 1);
     }
 
-    saveState?.();
-    saveUserData?.();
+    persistAppState();
   };
 }
 
@@ -490,9 +474,20 @@ if (langBtn) {
   const json = await res.json();
 
   ayah.text = json.data.text;
-  currentEl.querySelector('.ayah-text').textContent = ayah.text;
+  ayah.surah = currentLanguage === 'ar' ? json.data.surah.name : json.data.surah.englishName;
 
-  saveState();
+  const textEl = currentEl?.querySelector('.ayah-text');
+  if (textEl) textEl.textContent = ayah.text;
+
+  const metaEl = currentEl?.querySelector('.ayah-meta-inline');
+  if (metaEl) {
+    metaEl.textContent =
+      currentLanguage === 'ar'
+        ? `سورة ${ayah.surah} · آية ${ayah.ayahNumber}`
+        : `${ayah.surah} · Ayah ${ayah.ayahNumber}`;
+  }
+
+  persistAppState();
   loading = false;
 };
 }
@@ -616,7 +611,7 @@ async function setLanguage(lang) {
   // Optional but nice: re-fetch CURRENT ayah text in new language
   const ayah = ayahHistory?.[historyIndex];
   if (!ayah) {
-    saveState?.(); saveUserData?.();
+    persistAppState();
     return;
   }
 
@@ -636,7 +631,7 @@ async function setLanguage(lang) {
       if (t) t.textContent = ayah.text;
     }
 
-    saveState?.(); saveUserData?.();
+    persistAppState();
   } finally {
     loading = false;
   }
@@ -650,8 +645,7 @@ function setShuffle(enabled) {
     ayahHistory = ayahHistory.slice(0, historyIndex + 1);
   }
 
-  saveState?.();
-  saveUserData?.();
+  persistAppState();
   persistAppState();
 }
 
@@ -689,6 +683,16 @@ function wireSettingsUI() {
 // ===============================
 // INIT
 // ===============================
+// ensure swipe engine doesn't fight native scrolling
+if (app) {
+  app.style.position = 'relative';
+  app.style.overflow = 'hidden';
+}
+
+// Old bottom-left reference (deprecated)
+const ayahReferenceEl = document.getElementById('ayah-reference');
+if (ayahReferenceEl) ayahReferenceEl.style.display = 'none';
+
 loadState();
 
 if (shuffleBtn) {
@@ -702,18 +706,9 @@ if (!shuffleEnabled && ayahHistory.length === 0) {
   currentAyah = 1;
 }
 
-window.addEventListener("qiraah:start", () => {
-  appView.style.display = 'block';
-
-  if (!currentEl) {
-    goNext();
-  }
-});
-
 if (historyIndex >= 0 && ayahHistory[historyIndex]) {
   currentEl = createStoryElement(ayahHistory[historyIndex]);
   app.appendChild(currentEl);
-  updateAyahReference(ayahHistory[historyIndex]);
 } else {
   goNext();
 }
