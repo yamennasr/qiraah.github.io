@@ -1,10 +1,8 @@
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
-const session = localStorage.getItem("qiraah_session");
-
-localStorage.removeItem("qiraah_session");
-
+console.log("MAIN BEFORE:", localStorage.getItem("qiraah_session"));
+console.log("MAIN sees session:", localStorage.getItem("qiraah_session"));
 
 // ===============================
 // API
@@ -19,10 +17,6 @@ function hasForwardHistory() {
   return historyIndex < ayahHistory.length - 1;
 }
 
-function enterApp() {
-  document.getElementById("startScreen").style.display = "none";
-  document.getElementById("appView").style.display = "block";
-}
 
 function startApp() {
   const startView = document.getElementById("start-view");
@@ -42,6 +36,11 @@ function startApp() {
 // ELEMENTS
 // ===============================
 const startView = document.getElementById('start-view');
+// --- Safe persistence helper (works whether user system exists or not) ---
+function persistAppState() {
+  try { if (typeof saveState === "function") saveState(); } catch (_) {}
+  try { if (typeof saveUserData === "function") saveUserData(); } catch (_) {}
+}
 const createAccountBtn = document.getElementById('create-account-btn');
 const loginBtn = document.getElementById('login-btn');
 
@@ -608,6 +607,7 @@ async function setLanguage(lang) {
 
   currentLanguage = lang;
   markLangActive();
+  persistAppState();
 
   // Optional but nice: re-fetch CURRENT ayah text in new language
   const ayah = ayahHistory?.[historyIndex];
@@ -648,6 +648,7 @@ function setShuffle(enabled) {
 
   saveState?.();
   saveUserData?.();
+  persistAppState();
 }
 
 function wireSettingsUI() {
