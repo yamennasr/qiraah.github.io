@@ -44,6 +44,8 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function showStart() {
+    const bottomNav = document.querySelector(".bottom-nav");
+if (bottomNav) bottomNav.style.display = "none";
     // show auth/start view
     startView.style.display = "flex";
     startView.style.pointerEvents = "auto";
@@ -59,6 +61,8 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   function enterAppWithSession(username) {
+    const bottomNav = document.querySelector(".bottom-nav");
+if (bottomNav) bottomNav.style.display = "flex";
     // persist session
     localStorage.setItem("qiraah_session", username);
 
