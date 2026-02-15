@@ -14,6 +14,26 @@ body {
   background: #000
 }
 
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: pan-y;
+}
+
+
+input, textarea, select {
+  font-size: 16px;
+}
+
+
+#app-view, #app {
+  height: 100%;
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
 #start-view[style*="display: none"] {
   pointer-events: none;
 }
@@ -146,7 +166,7 @@ body {
 }
 
 #app {
-  scrollbar-width: none; /* For firefox */
+  scrollbar-width: none; 
 }
 
 #app::-webkit-scrollbar {
@@ -249,7 +269,7 @@ body {
   z-index: 20;
 }
 
-/* All UI icons */
+/* UI icons */
 button img {
   width: 48px;
   height: 48px;
@@ -301,8 +321,8 @@ button img {
   justify-content: space-around;
   align-items: center;
 
-  z-index: 9999;          /* 🔴 critical */
-  pointer-events: auto;  /* 🔴 critical */
+  z-index: 9999;
+  pointer-events: auto;
 }
 
 .bottom-nav button {
@@ -528,7 +548,7 @@ button img {
 
 #ayah-reference { display: none !important; }
 
-/* --- FIX: make views full-screen layers --- */
+
 #app-view,
 #bookmarks-view,
 #profile-view,
@@ -539,17 +559,17 @@ button img {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Put Bookmarks/Profile above Home view */
+
 #app-view { z-index: 100; }
 #bookmarks-view, #profile-view { z-index: 200; }
 
-/* Bottom nav stays above all */
+
 .bottom-nav { z-index: 9999; }
 
-/* Ensure app-view doesn't block when hidden */
+
 #app-view[style*="display: none"] { pointer-events: none; }
 
-/* Kill any accidental white header/strip */
+
 html, body {
   background: #000;
 }
@@ -558,7 +578,7 @@ html, body {
   background: #000;
 }
 
-/* If a top bar exists anywhere */
+
 .profile-topbar,
 #profile-content,
 #bookmarks-view h2,
@@ -569,13 +589,13 @@ html, body {
 .settings-panel { background: rgba(0,0,0,0.55) !important; }
 .settings-card  { background: rgba(0,0,0,0.85) !important; }
 
-/* iOS Safari: prevent white strip in the top safe-area / overscroll */
+
 :root, html, body {
   background: #000 !important;
   height: 100%;
 }
 
-/* Cover the top safe-area explicitly */
+
 body::before {
   content: "";
   position: fixed;
@@ -587,7 +607,7 @@ body::before {
   pointer-events: none;
 }
 
-/* Ensure sidebar buttons remain clickable */
+
 .side-controls button,
 .side-controls img {
   pointer-events: auto;
