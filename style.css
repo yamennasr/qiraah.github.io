@@ -167,6 +167,7 @@ body {
   text-align: center;
   font-size: 1.8rem;
   line-height: 1.6;
+  z-index: 2;
   will-change: transform;
   transition: opacity 0.25s ease, transform 0.25s ease;
 }
@@ -264,6 +265,7 @@ button img {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  z-index: 20000;    
 }
 
 .side-controls button {
@@ -524,6 +526,8 @@ button img {
   box-sizing: border-box;
 }
 
+#ayah-reference { display: none !important; }
+
 /* --- FIX: make views full-screen layers --- */
 #app-view,
 #bookmarks-view,
@@ -581,4 +585,10 @@ body::before {
   background: #000;
   z-index: 999999;
   pointer-events: none;
+}
+
+/* Ensure sidebar buttons remain clickable */
+.side-controls button,
+.side-controls img {
+  pointer-events: auto;
 }
