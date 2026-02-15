@@ -10,6 +10,8 @@ body {
   font-family: system-ui, -apple-system, sans-serif;
   height: 100vh;
   overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  background: #000
 }
 
 #start-view[style*="display: none"] {
@@ -542,3 +544,41 @@ button img {
 
 /* Ensure app-view doesn't block when hidden */
 #app-view[style*="display: none"] { pointer-events: none; }
+
+/* Kill any accidental white header/strip */
+html, body {
+  background: #000;
+}
+
+#app-view, #bookmarks-view, #profile-view {
+  background: #000;
+}
+
+/* If a top bar exists anywhere */
+.profile-topbar,
+#profile-content,
+#bookmarks-view h2,
+#profile-view h2 {
+  background: transparent !important;
+}
+
+.settings-panel { background: rgba(0,0,0,0.55) !important; }
+.settings-card  { background: rgba(0,0,0,0.85) !important; }
+
+/* iOS Safari: prevent white strip in the top safe-area / overscroll */
+:root, html, body {
+  background: #000 !important;
+  height: 100%;
+}
+
+/* Cover the top safe-area explicitly */
+body::before {
+  content: "";
+  position: fixed;
+  left: 0; right: 0;
+  top: 0;
+  height: env(safe-area-inset-top);
+  background: #000;
+  z-index: 999999;
+  pointer-events: none;
+}
