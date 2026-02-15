@@ -44,6 +44,10 @@ function persistAppState() {
 const createAccountBtn = document.getElementById('create-account-btn');
 const loginBtn = document.getElementById('login-btn');
 
+// TikTok-ish timing
+const SWIPE_MS = 320;
+const SWIPE_EASE = "cubic-bezier(.2,.8,.2,1)";
+
 const TOTAL_AYAHS = 6236;
 const appView = document.getElementById('app-view');
 const bookmarksView = document.getElementById('bookmarks-view');
@@ -316,11 +320,11 @@ async function goNext() {
 
   requestAnimationFrame(() => {
     nextEl.style.transition =
-      'transform 0.45s cubic-bezier(.22,.61,.36,1), opacity 0.35s ease';
+    `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
 
     if (currentEl) {
       currentEl.style.transition =
-        'transform 0.45s cubic-bezier(.22,.61,.36,1), opacity 0.35s ease';
+      `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
       currentEl.style.transform = 'translateY(-25%)';
       currentEl.style.opacity = '0';
     }
@@ -337,7 +341,7 @@ async function goNext() {
     updateAyahReference(ayahHistory[historyIndex]);
   
     loading = false;
-  }, 450);
+  }, SWIPE_MS + 30);
 }
 
 function goPrevious() {
@@ -353,10 +357,10 @@ function goPrevious() {
 
   requestAnimationFrame(() => {
     prevEl.style.transition =
-      'transform 0.45s cubic-bezier(.22,.61,.36,1), opacity 0.35s ease';
+    `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
     if (currentEl) {
       currentEl.style.transition =
-        'transform 0.45s cubic-bezier(.22,.61,.36,1), opacity 0.35s ease';
+      `transform ${SWIPE_MS}ms ${SWIPE_EASE}, opacity 180ms ease`;
     }
 
     prevEl.style.transform = 'translateY(0)';
@@ -377,7 +381,7 @@ function goPrevious() {
     updateAyahReference(ayahHistory[historyIndex]);
   
     loading = false;
-  }, 450);
+  }, SWIPE_MS + 30);
 }
 
 const ayahReferenceEl = document.getElementById('ayah-reference');
@@ -392,7 +396,7 @@ function updateAyahReference(ayah) {
 // SWIPE HANDLING
 // ===============================
 let startY = 0;
-const SWIPE_THRESHOLD = 60;
+const SWIPE_THRESHOLD = 45;
 
 app.addEventListener('touchstart', e => {
   startY = e.touches[0].clientY;
@@ -405,7 +409,7 @@ app.addEventListener('touchend', e => {
 });
 
 app.addEventListener('wheel', e => {
-  if (Math.abs(e.deltaY) < 40) return;
+  if (Math.abs(e.deltaY) < 20) return;
   e.deltaY > 0 ? goNext() : goPrevious();
 });
 
