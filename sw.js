@@ -1,9 +1,4 @@
-self.addEventListener('install', () => {
-    self.skipWaiting();
-  });
-  
-  self.addEventListener('fetch', () => {});
-
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js');
-  }
+// Service Worker disabled during development
+self.addEventListener("install", () => self.skipWaiting());
+self.addEventListener("activate", (e) => e.waitUntil(self.clients.claim()));
+self.addEventListener("fetch", () => {});
