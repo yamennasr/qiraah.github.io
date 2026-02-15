@@ -62,6 +62,18 @@ const profileView = document.getElementById('profile-view');
 const profileTab = document.getElementById('profile-tab');
 const profileContent = document.getElementById('profile-content');
 
+
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend', e => e.preventDefault());
+
+let lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) e.preventDefault();
+  lastTouchEnd = now;
+}, { passive: false });
+
 // ===============================
 // ICONS
 // ===============================
@@ -257,9 +269,10 @@ function createStoryElement(ayah) {
   el.style.width = '100%';
   el.style.height = '100%';
 
+  
   const cleanSurahAr = (name) =>
     String(name || "")
-      .replace(/^\s*(سورة|سُورَةُ)\s*/u, "") 
+      .replace(/^\s*(سورة|سُورَةُ)\s*/u, "")
       .trim();
 
   const surahName =
@@ -348,6 +361,7 @@ async function goNext() {
     currentEl = nextEl;
   
     updateBookmarkIcon();
+    
     persistAppState();
   
     loading = false;
@@ -477,7 +491,7 @@ if (langBtn) {
 
   loading = true;
 
-  // Re-fetch CURRENT ayah in new language
+
   const res = await fetch(getAyahUrl(ayah.id));
   const json = await res.json();
 
@@ -580,7 +594,7 @@ function renderProfile() {
     </div>
   `;
 
-  wireSettingsUI();
+  wireSettingsUI(); 
 }
 
 function openSettings() {
@@ -602,6 +616,7 @@ function markLangActive() {
   enBtn.classList.toggle("active", currentLanguage === "en");
 }
 
+
 async function setLanguage(lang) {
   if (loading) return;
   if (lang !== "ar" && lang !== "en") return;
@@ -620,7 +635,7 @@ async function setLanguage(lang) {
 
   loading = true;
   try {
-   
+  
     if (Array.isArray(ayahHistory)) ayahHistory = ayahHistory.slice(0, historyIndex + 1);
 
     const res = await fetch(getAyahUrl(ayah.id));
@@ -643,6 +658,7 @@ async function setLanguage(lang) {
 function setShuffle(enabled) {
   shuffleEnabled = !!enabled;
 
+
   if (shuffleEnabled && Array.isArray(ayahHistory)) {
     ayahHistory = ayahHistory.slice(0, historyIndex + 1);
   }
@@ -663,11 +679,13 @@ function wireSettingsUI() {
   if (btn) btn.onclick = openSettings;
   if (closeBtn) closeBtn.onclick = closeSettings;
 
+
   if (panel) {
     panel.addEventListener("click", (e) => {
       if (e.target === panel) closeSettings();
     });
   }
+
 
   if (shuffleToggle) shuffleToggle.checked = !!shuffleEnabled;
   markLangActive();
@@ -683,6 +701,7 @@ function wireSettingsUI() {
 // ===============================
 // INIT
 // ===============================
+
 if (app) {
   app.style.position = 'relative';
   app.style.overflow = 'hidden';
@@ -750,7 +769,7 @@ if (langBtn) {
         const settingsPanel = document.getElementById("settings-panel");
         if (settingsPanel) settingsPanel.classList.add("hidden");
       
-       
+
         if (appView) appView.style.display = "none";
         if (bookmarksView) {
           bookmarksView.style.display = "none";
@@ -761,7 +780,7 @@ if (langBtn) {
           profileView.classList.add("hidden");
         }
       
-        
+  
         if (view === "home") {
           if (appView) appView.style.display = "block";
         }
