@@ -17,17 +17,17 @@ body {
 
 html, body {
   height: 100%;
-  overflow: hidden;
-  overscroll-behavior: none;
-  touch-action: pan-y;
+  overflow: hidden;            /* no page scroll */
+  overscroll-behavior: none;   /* stop rubber-band bounce */
+  touch-action: pan-y;         /* allow vertical swipe only */
 }
 
-
+/* Inputs must be >=16px to stop Safari auto-zoom */
 input, textarea, select {
   font-size: 16px;
 }
 
-
+/* If your swipe surface is #app or #app-view, keep it the only scroll area */
 #app-view, #app {
   height: 100%;
   overflow: hidden;
@@ -166,7 +166,7 @@ input, textarea, select {
 }
 
 #app {
-  scrollbar-width: none; 
+  scrollbar-width: none; /* For firefox */
 }
 
 #app::-webkit-scrollbar {
@@ -269,7 +269,7 @@ input, textarea, select {
   z-index: 20;
 }
 
-/* UI icons */
+/* All UI icons */
 button img {
   width: 48px;
   height: 48px;
@@ -321,8 +321,8 @@ button img {
   justify-content: space-around;
   align-items: center;
 
-  z-index: 9999;
-  pointer-events: auto;
+  z-index: 9999;          /* 🔴 critical */
+  pointer-events: auto;  /* 🔴 critical */
 }
 
 .bottom-nav button {
@@ -548,7 +548,7 @@ button img {
 
 #ayah-reference { display: none !important; }
 
-
+/* --- FIX: make views full-screen layers --- */
 #app-view,
 #bookmarks-view,
 #profile-view,
@@ -559,17 +559,17 @@ button img {
   -webkit-overflow-scrolling: touch;
 }
 
-
+/* Put Bookmarks/Profile above Home view */
 #app-view { z-index: 100; }
 #bookmarks-view, #profile-view { z-index: 200; }
 
-
+/* Bottom nav stays above all */
 .bottom-nav { z-index: 9999; }
 
-
+/* Ensure app-view doesn't block when hidden */
 #app-view[style*="display: none"] { pointer-events: none; }
 
-
+/* Kill any accidental white header/strip */
 html, body {
   background: #000;
 }
@@ -578,7 +578,7 @@ html, body {
   background: #000;
 }
 
-
+/* If a top bar exists anywhere */
 .profile-topbar,
 #profile-content,
 #bookmarks-view h2,
@@ -589,13 +589,13 @@ html, body {
 .settings-panel { background: rgba(0,0,0,0.55) !important; }
 .settings-card  { background: rgba(0,0,0,0.85) !important; }
 
-
+/* iOS Safari: prevent white strip in the top safe-area / overscroll */
 :root, html, body {
   background: #000 !important;
   height: 100%;
 }
 
-
+/* Cover the top safe-area explicitly */
 body::before {
   content: "";
   position: fixed;
@@ -607,7 +607,7 @@ body::before {
   pointer-events: none;
 }
 
-
+/* Ensure sidebar buttons remain clickable */
 .side-controls button,
 .side-controls img {
   pointer-events: auto;
