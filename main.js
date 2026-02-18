@@ -2,8 +2,6 @@
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
 
-
-// TikTok-ish swipe timing (fast, no fading)
 const SWIPE_MS = 320;
 const SWIPE_EASE = 'cubic-bezier(.2,.8,.2,1)';
 
@@ -35,6 +33,11 @@ function startApp() {
   window.dispatchEvent(new Event("qiraah:start"));
 }
 
+//idk what to name this section lol...
+function isProfileVisible() {
+  return profileView && !profileView.classList.contains("hidden");
+}
+
 // ===============================
 // ELEMENTS
 // ===============================
@@ -64,7 +67,7 @@ const profileView = document.getElementById('profile-view');
 const profileTab = document.getElementById('profile-tab');
 const profileContent = document.getElementById('profile-content');
 
-// Prevent pinch-zoom & double-tap zoom (keeps swipe intact)
+//
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('gesturechange', e => e.preventDefault());
 document.addEventListener('gestureend', e => e.preventDefault());
@@ -77,9 +80,91 @@ document.addEventListener('touchend', (e) => {
 }, { passive: false });
 
 // ===============================
+// LOGOUT
+// ===============================
+document.addEventListener("click", (e) => {
+  if (e.target.closest("#logout-btn")) {
+    // 1. Clear session only
+    localStorage.removeItem("qiraah_session");
+
+    // 2. Hide app views
+    const startView = document.getElementById("start-view");
+    const appView = document.getElementById("app-view");
+    const bookmarksView = document.getElementById("bookmarks-view");
+    const profileView = document.getElementById("profile-view");
+
+    if (appView) appView.style.display = "none";
+    if (bookmarksView) bookmarksView.classList.add("hidden");
+    if (profileView) profileView.classList.add("hidden");
+
+    // 3. Show login/start screen again
+    if (startView) {
+      startView.style.display = "flex";
+      startView.style.pointerEvents = "auto";
+    }
+
+    // 4. Reset tab state visually
+    if (typeof setActiveTab === "function") {
+      setActiveTab("home");
+    }
+  }
+});
+
+// ===============================
+// Copy feedback
+// ===============================
+let toastEl = null;
+let toastTimer = null;
+
+function ensureToast() {
+  if (toastEl) return toastEl;
+
+  toastEl = document.createElement("div");
+  toastEl.id = "qiraah-toast";
+  toastEl.textContent = "";
+  toastEl.style.position = "fixed";
+  toastEl.style.left = "50%";
+  toastEl.style.top = "18px";
+  toastEl.style.transform = "translateX(-50%) translateY(-8px)";
+  toastEl.style.padding = "10px 14px";
+  toastEl.style.borderRadius = "999px";
+  toastEl.style.background = "rgba(0,0,0,0.78)";
+  toastEl.style.color = "#fff";
+  toastEl.style.fontSize = "14px";
+  toastEl.style.fontFamily = "system-ui, -apple-system, Segoe UI, Roboto, Arial";
+  toastEl.style.zIndex = "999999";
+  toastEl.style.opacity = "0";
+  toastEl.style.pointerEvents = "none";
+  toastEl.style.transition = "opacity 180ms ease, transform 220ms cubic-bezier(.2,.8,.2,1)";
+  toastEl.style.backdropFilter = "blur(8px)";
+
+  document.body.appendChild(toastEl);
+  return toastEl;
+}
+
+function showToast(message = "Copied to clipboard") {
+  const el = ensureToast();
+
+  // Reset any previous animation/timer
+  if (toastTimer) clearTimeout(toastTimer);
+  el.textContent = message;
+
+  // Animate in
+  requestAnimationFrame(() => {
+    el.style.opacity = "1";
+    el.style.transform = "translateX(-50%) translateY(0)";
+  });
+
+  // Animate out
+  toastTimer = setTimeout(() => {
+    el.style.opacity = "0";
+    el.style.transform = "translateX(-50%) translateY(-8px)";
+  }, 1200);
+}
+
+// ===============================
 // ICONS
 // ===============================
-
 const icons = {
     save: {
       active: 'https://i.ibb.co/0pLP8T6R/Save-Active.png',
@@ -128,6 +213,40 @@ let currentSurah = 1;
 let currentAyah = 1;
 
 let currentEl = null;
+
+// ===============================
+// Profile / Progress
+// ===============================
+function isArabicUI() {
+  return currentLanguage === "ar";
+}
+
+const i18n = {
+  ar: {
+    progressTitle: "تقدّمك",
+    progressHint: "تابع رحلتك في قراءة القرآن",
+    surahProgress: "تقدّم السورة",
+    ayahProgress: "تقدّم الآية",
+    totalQuran: "إجمالي القرآن",
+    completedLine: (total, remaining) =>
+      `لقد أكملت ${total}%، متبقّي ${remaining}%!`,
+    percent: (n) => `${n.toFixed(2)}%`
+  },
+  en: {
+    progressTitle: "Your Progress",
+    progressHint: "Track your Quran reading journey",
+    surahProgress: "Surah Progress",
+    ayahProgress: "Ayah Progress",
+    totalQuran: "Total Quran",
+    completedLine: (total, remaining) =>
+      `You’ve completed a total of ${total}%, ${remaining}% more to go!`,
+    percent: (n) => `${n.toFixed(2)}%`
+  }
+};
+
+function t() {
+  return isArabicUI() ? i18n.ar : i18n.en;
+}
 
 // ===============================
 // SURAH AYAH COUNTS
@@ -181,18 +300,44 @@ function getTotalProgress() {
 }
 
 function renderProgress() {
+  const tr = t();
+
   const surah = getSurahProgress();
   const ayah = getAyahProgress();
   const total = getTotalProgress();
 
-  document.getElementById('surah-bar').style.width = `${surah}%`;
-  document.getElementById('ayah-bar').style.width = `${ayah}%`;
-  document.getElementById('total-bar').style.width = `${total}%`;
+  const surahEl = document.getElementById("surah-bar");
+  const ayahEl = document.getElementById("ayah-bar");
+  const totalEl = document.getElementById("total-bar");
 
-  const remaining = Math.max(0, 100 - total).toFixed(2);
+  if (surahEl) surahEl.style.width = `${surah}%`;
+  if (ayahEl) ayahEl.style.width = `${ayah}%`;
+  if (totalEl) totalEl.style.width = `${total}%`;
 
-  document.getElementById('progress-subtitle').textContent =
-    `You’ve completed a total of ${total.toFixed(2)}%, ${remaining}% more to go!`;
+  const remaining = Math.max(0, 100 - total);
+
+  const subtitle = document.getElementById("progress-subtitle");
+  if (subtitle) {
+    subtitle.textContent = tr.completedLine(
+      total.toFixed(2),
+      remaining.toFixed(2)
+    );
+  }
+
+  // Update labels
+  const labels = document.querySelectorAll(".progress-bar .label");
+  if (labels.length >= 3) {
+    labels[0].textContent = tr.surahProgress;
+    labels[1].textContent = tr.ayahProgress;
+    labels[2].textContent = tr.totalQuran;
+  }
+
+  // Optional: make profile content title/hint match language
+  const profileTitle = document.querySelector("#profile-content h2");
+  if (profileTitle) profileTitle.textContent = tr.progressTitle;
+
+  const profileHint = document.querySelector("#profile-content p");
+  if (profileHint) profileHint.textContent = tr.progressHint;
 }
 
 // ===============================
@@ -445,9 +590,32 @@ bookmarkBtn.onclick = () => {
   saveState();
 };
 
-copyBtn.onclick = () => {
+copyBtn.onclick = async () => {
   const ayah = ayahHistory[historyIndex];
-  if (ayah) navigator.clipboard.writeText(ayah.text);
+  if (!ayah) return;
+
+  try {
+    await navigator.clipboard.writeText(ayah.text);
+    showToast(currentLanguage === "ar" ? "تم النسخ" : "Copied to clipboard");
+  } catch (e) {
+    // Fallback if clipboard is blocked (some Safari cases)
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = ayah.text;
+      ta.style.position = "fixed";
+      ta.style.left = "-9999px";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+
+      showToast(currentLanguage === "ar" ? "تم النسخ" : "Copied to clipboard");
+    } catch (err) {
+      showToast(currentLanguage === "ar" ? "تعذر النسخ" : "Copy failed");
+      console.error("Copy failed:", err);
+    }
+  }
 };
 
 // ===============================
@@ -479,7 +647,7 @@ if (langBtn) {
   // Toggle language
   currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
 
-  // Update icon (we'll define icons in part 2)
+  // Update icon
   langBtn.querySelector('img').src =
     currentLanguage === 'ar'
       ? icons.lang.ar
@@ -488,7 +656,6 @@ if (langBtn) {
   const ayah = ayahHistory[historyIndex];
   if (!ayah) return;
 
-  // 🚨 CRITICAL: discard forward history
   ayahHistory = ayahHistory.slice(0, historyIndex + 1);
 
   loading = true;
@@ -512,6 +679,14 @@ if (langBtn) {
   }
 
   persistAppState();
+  saveState();
+
+  // for instant profile refresh
+  if (isProfileVisible()) {
+    renderProgress();
+  }
+  
+  renderProgress();
   loading = false;
 };
 }
@@ -618,11 +793,7 @@ function markLangActive() {
   enBtn.classList.toggle("active", currentLanguage === "en");
 }
 
-/**
- * Keep functionality without touching swipe engine:
- * - shuffleEnabled toggled here
- * - language changed here (future verses will follow)
- */
+//...
 async function setLanguage(lang) {
   if (loading) return;
   if (lang !== "ar" && lang !== "en") return;
@@ -684,15 +855,13 @@ function wireSettingsUI() {
 
   if (btn) btn.onclick = openSettings;
   if (closeBtn) closeBtn.onclick = closeSettings;
-
-  // close if user taps outside the card
   if (panel) {
     panel.addEventListener("click", (e) => {
       if (e.target === panel) closeSettings();
     });
   }
 
-  // reflect current state
+
   if (shuffleToggle) shuffleToggle.checked = !!shuffleEnabled;
   markLangActive();
 
@@ -707,13 +876,6 @@ function wireSettingsUI() {
 // ===============================
 // INIT
 // ===============================
-// ensure swipe engine doesn't fight native scrolling
-if (app) {
-  app.style.position = 'relative';
-  app.style.overflow = 'hidden';
-}
-
-// Old bottom-left reference (deprecated)
 const ayahReferenceEl = document.getElementById('ayah-reference');
 if (ayahReferenceEl) ayahReferenceEl.style.display = 'none';
 
@@ -724,7 +886,7 @@ if (shuffleBtn) {
   if (img) img.src = shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
 }
 
-// FORCE STARTING POINT (ORDER MODE)
+
 if (!shuffleEnabled && ayahHistory.length === 0) {
   currentSurah = 1;
   currentAyah = 1;
@@ -786,7 +948,6 @@ if (langBtn) {
           profileView.classList.add("hidden");
         }
       
-        // Show the requested view
         if (view === "home") {
           if (appView) appView.style.display = "block";
         }
