@@ -16,7 +16,6 @@
   
 </head>
 <body>
-
   <div id="start-view" class="start-view">
     <div class="start-content">
   
@@ -36,7 +35,7 @@
         Login
       </button>
 
-      <!-- Provider sign-in (optional, free via Firebase) -->
+      <!-- Provider sign-in -->
       <button id="google-signin-btn" class="start-btn start-btn-provider" type="button">
         Continue with Google
       </button>
@@ -63,8 +62,28 @@
     <button type="submit" class="start-btn">Login</button>
   </form>
 
+  <button type="button" id="forgot-password-btn" class="auth-link">
+    Forgot Password?
+  </button>
+
   <p id="auth-error" class="auth-error hidden"></p>
 
+</div>
+
+<div id="reset-modal" class="auth-modal hidden">
+  <div class="auth-modal-box">
+    <h3>Reset Password</h3>
+
+    <input id="reset-name" placeholder="Username" />
+    <input id="reset-pass" type="password" placeholder="New Password" />
+
+    <div class="auth-modal-actions">
+      <button id="reset-confirm">Confirm</button>
+      <button id="reset-cancel">Cancel</button>
+    </div>
+
+    <p id="reset-error" class="auth-error hidden"></p>
+  </div>
 </div>
   
     </div>
@@ -134,7 +153,11 @@
         <button id="lang-en" type="button">EN</button>
       </div>
     </div>
+   <button id="logout-btn" class="settings-btn logout-btn">
+    Log Out
+  </button>
   </div>
+  
 </div>
 
   <div class="progress-container">
