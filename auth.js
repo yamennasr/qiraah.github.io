@@ -23,10 +23,10 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const errorEl = document.getElementById("auth-error");
 
-  // Handle redirect-based sign-in (Safari fallback)
+  
 (async () => {
   try {
-    const fb = await import("/static/firebase_auth.js");
+    const fb = await import("firebase_auth.js");
     const user = await fb.handleRedirectResult();
     if (user) {
       startAppWithSession(user.email || user.uid);
@@ -35,7 +35,7 @@ window.addEventListener("DOMContentLoaded", () => {
 })();
 
   if (!startView || !appView) {
-    console.error("auth.js: Missing #start-view or #app-view in HTML.");
+    console.error("auth.js: Missing #start-view or #app-view in HTML");
     return;
   }
 
@@ -61,14 +61,12 @@ window.addEventListener("DOMContentLoaded", () => {
   function showStart() {
     const bottomNav = document.querySelector(".bottom-nav");
 if (bottomNav) bottomNav.style.display = "none";
-    // show auth/start view
+
     startView.style.display = "flex";
     startView.style.pointerEvents = "auto";
 
-    // hide app view (CSS default might already do this)
     appView.style.display = "none";
 
-    // hide forms until user chooses
     if (formsWrap) formsWrap.classList.add("hidden");
     if (signupForm) signupForm.classList.add("hidden");
     if (loginForm) loginForm.classList.add("hidden");
@@ -78,17 +76,14 @@ if (bottomNav) bottomNav.style.display = "none";
   function enterAppWithSession(username) {
     const bottomNav = document.querySelector(".bottom-nav");
 if (bottomNav) bottomNav.style.display = "flex";
-    // persist session
+
     localStorage.setItem("qiraah_session", username);
 
-    // hide start view completely (cannot block clicks)
     startView.style.display = "none";
     startView.style.pointerEvents = "none";
 
-    // IMPORTANT: show app view (your CSS often hides it by default)
     appView.style.display = "block";
 
-    // kick main.js boot
     window.dispatchEvent(new Event("qiraah:start"));
   }
 
@@ -106,7 +101,7 @@ if (bottomNav) bottomNav.style.display = "flex";
   async function tryHandleRedirectResults() {
     try {
       // If Firebase is configured and we came back from a redirect, complete sign-in.
-      const mod = await import("/static/firebase_auth.js");
+      const mod = await import("firebase_auth.js");
 
       const g = await mod.getGoogleRedirectResultIfAny();
       if (g && (g.email || g.uid)) {
@@ -124,7 +119,7 @@ if (bottomNav) bottomNav.style.display = "flex";
         return true;
       }
     } catch (e) {
-      // If Firebase isn't configured, ignore silently.
+      
     }
     return false;
   }
@@ -159,7 +154,7 @@ if (googleBtn) {
     googleBtn.addEventListener("click", async () => {
       clearError();
       try {
-        const mod = await import("/static/firebase_auth.js");
+        const mod = await import("firebase_auth.js");
         const res = await mod.signInWithGoogle();
         if (res && res.pendingRedirect) return; // will complete after redirect
 
@@ -177,7 +172,7 @@ if (googleBtn) {
     appleBtn.addEventListener("click", async () => {
       clearError();
       try {
-        const mod = await import("/static/firebase_auth.js");
+        const mod = await import("firebase_auth.js");
         const res = await mod.signInWithApple();
         if (res && res.pendingRedirect) return;
         showError("Apple sign-in requires redirect. Please try again.");
@@ -240,16 +235,13 @@ if (googleBtn) {
     );
 
     if (exists) {
-      // IMPORTANT: use the SAME flow as login/signup
       enterAppWithSession(session);
       return;
     } else {
-      // stale session
       localStorage.removeItem("qiraah_session");
     }
   }
 
-  // If returning from provider redirect, finish sign-in.
   tryHandleRedirectResults().then((handled) => {
     if (!handled) showStart();
   });
@@ -260,17 +252,14 @@ if (googleBtn) {
 // ===============================
 async function signInWithGoogleProvider() {
   try {
-    // Dynamically load Firebase module (so we don't break main.js)
-    const fb = await import("/static/firebase_auth.js");
+    const fb = await import("firebase_auth.js");
 
-    // Check if returning from redirect (Safari-safe flow)
     const redirectUser = await fb.handleRedirectResult();
     if (redirectUser) {
       startAppWithSession(redirectUser.email || redirectUser.uid);
       return;
     }
 
-    // Try popup first
     const user = await fb.googleSignIn();
 
     if (user) {
