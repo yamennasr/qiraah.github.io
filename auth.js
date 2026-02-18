@@ -23,7 +23,38 @@ window.addEventListener("DOMContentLoaded", () => {
 
   const errorEl = document.getElementById("auth-error");
 
+  function startAppWithSession(username) {
+    // Save session
+    localStorage.setItem("qiraah_session", username);
   
+    // Hide auth/start UI
+    if (startView) {
+      startView.style.display = "none";
+      startView.style.pointerEvents = "none";
+    }
+  
+    const bottomNav = document.querySelector(".bottom-nav");
+    if (bottomNav) bottomNav.style.display = "flex";
+  
+    // Tell main.js to boot the app
+    window.dispatchEvent(new Event("qiraah:start"));
+  }
+
+  function showError(msg) {
+    if (!errorEl) {
+      alert(msg);
+      return;
+    }
+    errorEl.textContent = msg;
+    errorEl.classList.remove("hidden");
+  }
+  
+  function clearError() {
+    if (!errorEl) return;
+    errorEl.textContent = "";
+    errorEl.classList.add("hidden");
+  }
+
 (async () => {
   try {
     const fb = await import("firebase_auth.js");
@@ -35,7 +66,7 @@ window.addEventListener("DOMContentLoaded", () => {
 })();
 
   if (!startView || !appView) {
-    console.error("auth.js: Missing #start-view or #app-view in HTML");
+    console.error("auth.js: Missing #start-view or #app-view in HTML.");
     return;
   }
 
@@ -61,12 +92,14 @@ window.addEventListener("DOMContentLoaded", () => {
   function showStart() {
     const bottomNav = document.querySelector(".bottom-nav");
 if (bottomNav) bottomNav.style.display = "none";
-
+    // show auth/start view
     startView.style.display = "flex";
     startView.style.pointerEvents = "auto";
 
+    // hide app view
     appView.style.display = "none";
 
+    // hide forms until user chooses
     if (formsWrap) formsWrap.classList.add("hidden");
     if (signupForm) signupForm.classList.add("hidden");
     if (loginForm) loginForm.classList.add("hidden");
@@ -76,14 +109,17 @@ if (bottomNav) bottomNav.style.display = "none";
   function enterAppWithSession(username) {
     const bottomNav = document.querySelector(".bottom-nav");
 if (bottomNav) bottomNav.style.display = "flex";
-
+    // persist session
     localStorage.setItem("qiraah_session", username);
 
+    // hide start view completely (cannot block clicks)
     startView.style.display = "none";
     startView.style.pointerEvents = "none";
 
+    // IMPORTANT: show app view (your CSS often hides it by default)
     appView.style.display = "block";
 
+    // kick main.js boot
     window.dispatchEvent(new Event("qiraah:start"));
   }
 
@@ -97,6 +133,35 @@ if (bottomNav) bottomNav.style.display = "flex";
       saveUsers(users);
     }
   }
+
+// ===============================
+// FIREBASE PROVIDER LOGIN (Google)
+// ===============================
+async function signInWithGoogleProvider() {
+  try {
+    // Dynamically load Firebase module (so we don't break main.js)
+    const fb = await import("firebase_auth.js");
+
+    // Check if returning from redirect (Safari-safe flow)
+    const redirectUser = await fb.handleRedirectResult();
+    if (redirectUser) {
+      enterAppWithSession(redirectUser.email || redirectUser.uid);
+      return;
+    }
+
+    // Try popup first
+    const user = await fb.googleSignIn();
+
+    if (user) {
+      enterAppWithSession(user.email || user.uid);
+    }
+
+} catch (err) {
+  console.error("Google sign-in error:", err);
+  if (typeof showError === "function") showError("Google sign-in failed. Try again.");
+  else alert("Google sign-in failed. Try again.");
+}
+}
 
   async function tryHandleRedirectResults() {
     try {
@@ -119,7 +184,7 @@ if (bottomNav) bottomNav.style.display = "flex";
         return true;
       }
     } catch (e) {
-      
+      // If Firebase isn't configured, ignore silently.
     }
     return false;
   }
@@ -140,6 +205,8 @@ if (bottomNav) bottomNav.style.display = "flex";
     if (loginName) loginName.focus();
   }
 
+
+  clearError();
   // Buttons (show forms)
   if (createBtn) createBtn.addEventListener("click", showSignup);
   if (loginBtn) loginBtn.addEventListener("click", showLogin);
@@ -226,7 +293,7 @@ if (googleBtn) {
     });
   }
 
-  // ---- Auto-enter if session exists and user exists ----
+  // ---- Auto-enter if session existss ----
   const session = localStorage.getItem("qiraah_session");
   if (session) {
     const users = loadUsers();
@@ -242,32 +309,9 @@ if (googleBtn) {
     }
   }
 
+  // If returning from provider redirect, finish sign-in
   tryHandleRedirectResults().then((handled) => {
     if (!handled) showStart();
   });
+
 });
-
-// ===============================
-// FIREBASE PROVIDER LOGIN (Google)
-// ===============================
-async function signInWithGoogleProvider() {
-  try {
-    const fb = await import("firebase_auth.js");
-
-    const redirectUser = await fb.handleRedirectResult();
-    if (redirectUser) {
-      startAppWithSession(redirectUser.email || redirectUser.uid);
-      return;
-    }
-
-    const user = await fb.googleSignIn();
-
-    if (user) {
-      startAppWithSession(user.email || user.uid);
-    }
-
-  } catch (err) {
-    console.error("Google sign-in error:", err);
-    showError("Google sign-in failed. Try again.");
-  }
-}
