@@ -5,13 +5,13 @@
 }
 
 body {
-  background: #0b0b0b;
+  background: #272727;
   color: white;
   font-family: system-ui, -apple-system, sans-serif;
   height: 100vh;
   overflow: hidden;
   padding-top: env(safe-area-inset-top);
-  background: #000
+  background: #1f1f1f
 }
 
 
@@ -144,6 +144,58 @@ input, textarea, select {
   opacity: 0.9;
 }
 
+.auth-link {
+  margin-top: 8px;
+  background: none;
+  border: none;
+  color: #bbb;
+  font-size: 0.9rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.auth-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 99999;
+}
+
+.auth-modal-box {
+  background: #111;
+  padding: 22px;
+  border-radius: 14px;
+  width: 90%;
+  max-width: 340px;
+  text-align: center;
+}
+
+.auth-modal-box input {
+  width: 100%;
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  outline: none;
+}
+
+.auth-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.auth-modal-actions button {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+}
+
 .hidden { display: none !important; }
 
 /* MAIN VIEW */
@@ -157,7 +209,7 @@ input, textarea, select {
 #app {
   pointer-events: auto;
   height: calc(100vh - 60px);
-  background: #141414;
+  background: #1f1f1f;
   overflow-y: auto;
   scroll-snap-type: y mandatory;
   overflow: hidden;
@@ -315,7 +367,7 @@ button img {
   left: 0;
   right: 0;
   height: 68px;
-  background: #0f0f0f;
+  background: #101010;
 
   display: flex;
   justify-content: space-around;
@@ -347,7 +399,7 @@ button img {
   padding: 1rem;
   height: calc(100vh - 60px);
   overflow-y: auto;
-  background: #141414;
+  background: #272727;
 }
 
 #bookmarks-view h2 {
@@ -357,7 +409,7 @@ button img {
 .bookmark-item {
   padding: 1rem;
   margin-bottom: 10px;
-  background: #1c1c1c;
+  background: #2a2a2a;
   border-radius: 10px;
   font-size: 1rem;
 }
@@ -367,7 +419,7 @@ button img {
   padding: 1rem;
   height: calc(100vh - 60px);
   overflow-y: auto;
-  background: #141414;
+  background: #272727;
 }
 
 #profile-view h2 {
@@ -384,10 +436,11 @@ button img {
 }
 
 .progress-container {
-  background: rgba(0,0,0,0.45);
+  background: rgba(54, 54, 54, 0.451);
   border-radius: 14px;
   padding: 16px;
   margin-top: 20px;
+  margin-bottom: 20px;
 }
 
 .progress-bar {
@@ -400,9 +453,9 @@ button img {
 }
 
 .track {
-  height: 6px;
+  height: 13px;
   background: rgba(255,255,255,0.15);
-  border-radius: 6px;
+  border-radius: 20px;
   overflow: hidden;
   margin-top: 6px;
 }
@@ -410,7 +463,7 @@ button img {
 .track > div {
   height: 100%;
   width: 0%;
-  background: white;
+  background: rgb(255, 255, 255);
   border-radius: 6px;
   transition: width 0.4s ease;
 }
@@ -419,7 +472,7 @@ button img {
 .settings-panel{
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: rgba(20, 20, 20, 0.55);
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -430,7 +483,7 @@ button img {
 .settings-card{
   width: 100%;
   max-width: 480px;
-  background: rgba(0,0,0,0.85);
+  background: rgba(31, 31, 31, 0.85);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 18px;
   padding: 16px;
@@ -461,6 +514,21 @@ button img {
   padding: 14px 0;
   border-top: 1px solid rgba(255,255,255,0.08);
   gap: 14px;
+}
+
+.logout-btn {
+  align-items:center;
+  margin-top: 18px;
+  width: 100%;
+  background: #cf4646;
+  font-size: 12px;
+  color: #fff;
+  font-weight: 600;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 10px;
+  justify-content: center;
+  padding: 12px;
+  cursor: pointer;
 }
 
 .settings-title{ font-size: 14px; }
