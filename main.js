@@ -2,6 +2,7 @@
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
 localStorage.clear();
+location.reload();
 
 // TikTok-ish swipe timing (fast, no fading)
 const SWIPE_MS = 320;
