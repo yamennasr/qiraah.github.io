@@ -67,10 +67,7 @@ const profileView = document.getElementById('profile-view');
 const profileTab = document.getElementById('profile-tab');
 const profileContent = document.getElementById('profile-content');
 
-//
-document.addEventListener('gesturestart', e => e.preventDefault());
-document.addEventListener('gesturechange', e => e.preventDefault());
-document.addEventListener('gestureend', e => e.preventDefault());
+
 
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
