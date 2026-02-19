@@ -6,7 +6,7 @@ loginBtn.onclick = () => {
 
   localStorage.setItem("qiraah_session", username);
 
-  enterApp(); // call function from main.js
+  enterApp(); 
 };
 
 createAccountBtn.onclick = () => {
