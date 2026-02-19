@@ -20,8 +20,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const signupPass = document.getElementById("signup-pass");
   const loginName = document.getElementById("login-name");
   const loginPass = document.getElementById("login-pass");
+  const forgotPassBtn = document.getElementById('forgot-pass-btn');
 
   const errorEl = document.getElementById("auth-error");
+
 
   function startAppWithSession(username) {
     // Save session
@@ -33,6 +35,7 @@ window.addEventListener("DOMContentLoaded", () => {
       startView.style.pointerEvents = "none";
     }
   
+    // Show bottom nav again (since you hide it on auth screen)
     const bottomNav = document.querySelector(".bottom-nav");
     if (bottomNav) bottomNav.style.display = "flex";
   
@@ -55,9 +58,10 @@ window.addEventListener("DOMContentLoaded", () => {
     errorEl.classList.add("hidden");
   }
 
+  // Handle redirect-based sign-in (Safari fallback)
 (async () => {
   try {
-    const fb = await import("firebase_auth.js");
+    const fb = await import("/static/firebase_auth.js");
     const user = await fb.handleRedirectResult();
     if (user) {
       startAppWithSession(user.email || user.uid);
@@ -96,7 +100,7 @@ if (bottomNav) bottomNav.style.display = "none";
     startView.style.display = "flex";
     startView.style.pointerEvents = "auto";
 
-    // hide app view
+    // hide app view (CSS default might already do this)
     appView.style.display = "none";
 
     // hide forms until user chooses
@@ -140,7 +144,7 @@ if (bottomNav) bottomNav.style.display = "flex";
 async function signInWithGoogleProvider() {
   try {
     // Dynamically load Firebase module (so we don't break main.js)
-    const fb = await import("firebase_auth.js");
+    const fb = await import("/static/firebase_auth.js");
 
     // Check if returning from redirect (Safari-safe flow)
     const redirectUser = await fb.handleRedirectResult();
@@ -166,7 +170,7 @@ async function signInWithGoogleProvider() {
   async function tryHandleRedirectResults() {
     try {
       // If Firebase is configured and we came back from a redirect, complete sign-in.
-      const mod = await import("firebase_auth.js");
+      const mod = await import("/static/firebase_auth.js");
 
       const g = await mod.getGoogleRedirectResultIfAny();
       if (g && (g.email || g.uid)) {
@@ -221,7 +225,7 @@ if (googleBtn) {
     googleBtn.addEventListener("click", async () => {
       clearError();
       try {
-        const mod = await import("firebase_auth.js");
+        const mod = await import("/static/firebase_auth.js");
         const res = await mod.signInWithGoogle();
         if (res && res.pendingRedirect) return; // will complete after redirect
 
@@ -239,7 +243,7 @@ if (googleBtn) {
     appleBtn.addEventListener("click", async () => {
       clearError();
       try {
-        const mod = await import("firebase_auth.js");
+        const mod = await import("/static/firebase_auth.js");
         const res = await mod.signInWithApple();
         if (res && res.pendingRedirect) return;
         showError("Apple sign-in requires redirect. Please try again.");
@@ -293,7 +297,34 @@ if (googleBtn) {
     });
   }
 
-  // ---- Auto-enter if session existss ----
+// ---- Forgot password (delegated; works even if button is rendered later) ----
+document.addEventListener("click", async (e) => {
+  const btn = e.target.closest("#forgot-pass-btn");
+  if (!btn) return;
+
+  if (typeof clearError === "function") clearError();
+
+  const emailInput = document.getElementById("login-name"); // your login email input
+  const email = (emailInput?.value || "").trim();
+
+  if (!email) {
+    if (typeof showError === "function") showError("Please enter your email to reset password.");
+    else alert("Please enter your email to reset password.");
+    return;
+  }
+
+  try {
+    const fb = await import("/static/firebase_auth.js");
+    await fb.sendReset(email);
+    alert("Password reset link sent to your email.");
+  } catch (err) {
+    console.error("Reset error:", err);
+    if (typeof showError === "function") showError("Failed to send reset email. Try again.");
+    else alert("Failed to send reset email. Try again.");
+  }
+});
+
+  // ---- Auto-enter if session exists and user exists ----
   const session = localStorage.getItem("qiraah_session");
   if (session) {
     const users = loadUsers();
@@ -302,14 +333,16 @@ if (googleBtn) {
     );
 
     if (exists) {
+      // IMPORTANT: use the SAME flow as login/signup
       enterAppWithSession(session);
       return;
     } else {
+      // stale session
       localStorage.removeItem("qiraah_session");
     }
   }
 
-  // If returning from provider redirect, finish sign-in
+  // If returning from provider redirect, finish sign-in.
   tryHandleRedirectResults().then((handled) => {
     if (!handled) showStart();
   });
