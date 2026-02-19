@@ -1,13 +1,20 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+// /static/firebase_auth.js
+// Firebase Auth helper (ESM) — safe init order (no TDZ issues)
+
+import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
   GoogleAuthProvider,
   signInWithPopup,
   signInWithRedirect,
-  getRedirectResult
+  getRedirectResult,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// Your Firebase config
+// ---- 1) Your config (keep your real values) ----
 const firebaseConfig = {
   apiKey: "AIzaSyDTPTbVrKsObyk5bVhndrcV2IGXMzHjNII",
   authDomain: "qiraahswipe.firebaseapp.com",
@@ -17,22 +24,50 @@ const firebaseConfig = {
   appId: "1:354349569766:web:cecdde944cdef4173f8d27"
 };
 
-// Init Firebase
-const app = initializeApp(firebaseConfig);
+// ---- 2) Initialize FIRST (critical) ----
+const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
+// ---- 3) Provider created AFTER auth exists ----
+const googleProvider = new GoogleAuthProvider();
+
+// ===============================
+// GOOGLE SIGN-IN
+// ===============================
+
+// Popup flow (works on most browsers)
 export async function googleSignIn() {
-  try {
-    const result = await signInWithPopup(auth, provider);
-    return result.user;
-  } catch (err) {
-    await signInWithRedirect(auth, provider);
-    return null;
-  }
+  const cred = await signInWithPopup(auth, googleProvider);
+  return cred.user;
 }
 
+// Redirect flow (Safari-safe)
+export async function googleRedirect() {
+  await signInWithRedirect(auth, googleProvider);
+}
+
+// Handle redirect result after returning
 export async function handleRedirectResult() {
-  const result = await getRedirectResult(auth);
-  return result ? result.user : null;
+  const res = await getRedirectResult(auth);
+  return res ? res.user : null;
+}
+
+// ===============================
+// EMAIL/PASSWORD (optional but recommended)
+// ===============================
+export async function emailSignUp(email, password, displayName = "") {
+  const cred = await createUserWithEmailAndPassword(auth, email, password);
+  if (displayName) {
+    await updateProfile(cred.user, { displayName });
+  }
+  return cred.user;
+}
+
+export async function emailLogin(email, password) {
+  const cred = await signInWithEmailAndPassword(auth, email, password);
+  return cred.user;
+}
+
+export async function sendReset(email) {
+  await sendPasswordResetEmail(auth, email);
 }
