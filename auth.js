@@ -159,11 +159,6 @@ async function signInWithGoogleProvider() {
       enterAppWithSession(user.email || user.uid);
     }
 
-} catch (err) {
-  console.error("Google sign-in error:", err);
-  if (typeof showError === "function") showError("Google sign-in failed. Try again.");
-  else alert("Google sign-in failed. Try again.");
-}
 }
 
   async function tryHandleRedirectResults() {
