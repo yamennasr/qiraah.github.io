@@ -1,6 +1,9 @@
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
+
+
+// TikTok-ish swipe timing (fast, no fading)
 const SWIPE_MS = 320;
 const SWIPE_EASE = 'cubic-bezier(.2,.8,.2,1)';
 
