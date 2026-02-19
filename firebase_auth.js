@@ -1,3 +1,6 @@
+// /static/firebase_auth.js
+// Firebase Auth helper (ESM) — safe init order (no TDZ issues)
+
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
   getAuth,
@@ -11,7 +14,7 @@ import {
   updateProfile
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-//
+// ---- 1) Your config (keep your real values) ----
 const firebaseConfig = {
   apiKey: "AIzaSyDTPTbVrKsObyk5bVhndrcV2IGXMzHjNII",
   authDomain: "qiraahswipe.firebaseapp.com",
@@ -21,11 +24,11 @@ const firebaseConfig = {
   appId: "1:354349569766:web:cecdde944cdef4173f8d27"
 };
 
-//
+// ---- 2) Initialize FIRST (critical) ----
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-//
+// ---- 3) Provider created AFTER auth exists ----
 const googleProvider = new GoogleAuthProvider();
 
 // ===============================
@@ -38,7 +41,7 @@ export async function googleSignIn() {
   return cred.user;
 }
 
-//
+// Redirect flow (Safari-safe)
 export async function googleRedirect() {
   await signInWithRedirect(auth, googleProvider);
 }
