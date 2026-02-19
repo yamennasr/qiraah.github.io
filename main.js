@@ -1,7 +1,6 @@
 // ===============================
 // Qiraah Swipe App – FINAL STABLE CORE
 // ===============================
-
 const SWIPE_MS = 320;
 const SWIPE_EASE = 'cubic-bezier(.2,.8,.2,1)';
 
@@ -33,7 +32,7 @@ function startApp() {
   window.dispatchEvent(new Event("qiraah:start"));
 }
 
-//idk what to name this section lol...
+//...
 function isProfileVisible() {
   return profileView && !profileView.classList.contains("hidden");
 }
@@ -67,7 +66,10 @@ const profileView = document.getElementById('profile-view');
 const profileTab = document.getElementById('profile-tab');
 const profileContent = document.getElementById('profile-content');
 
-
+// Prevent pinch-zoom & double-tap zoom (keeps swipe intact)
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('gesturechange', e => e.preventDefault());
+document.addEventListener('gestureend', e => e.preventDefault());
 
 let lastTouchEnd = 0;
 document.addEventListener('touchend', (e) => {
@@ -77,7 +79,7 @@ document.addEventListener('touchend', (e) => {
 }, { passive: false });
 
 // ===============================
-// LOGOUT
+// LOGOUT (Delegated – works even if button is rendered later)
 // ===============================
 document.addEventListener("click", (e) => {
   if (e.target.closest("#logout-btn")) {
@@ -108,7 +110,7 @@ document.addEventListener("click", (e) => {
 });
 
 // ===============================
-// Copy feedback
+// TOAST (Copy feedback)
 // ===============================
 let toastEl = null;
 let toastTimer = null;
@@ -212,7 +214,7 @@ let currentAyah = 1;
 let currentEl = null;
 
 // ===============================
-// Profile / Progress
+// i18n (Profile / Progress)
 // ===============================
 function isArabicUI() {
   return currentLanguage === "ar";
@@ -321,7 +323,7 @@ function renderProgress() {
     );
   }
 
-  // Update labels
+  // Update labels if they exist in your HTML
   const labels = document.querySelectorAll(".progress-bar .label");
   if (labels.length >= 3) {
     labels[0].textContent = tr.surahProgress;
@@ -653,6 +655,7 @@ if (langBtn) {
   const ayah = ayahHistory[historyIndex];
   if (!ayah) return;
 
+  // 🚨 CRITICAL: discard forward history
   ayahHistory = ayahHistory.slice(0, historyIndex + 1);
 
   loading = true;
@@ -790,7 +793,12 @@ function markLangActive() {
   enBtn.classList.toggle("active", currentLanguage === "en");
 }
 
-//...
+
+/**
+ * Keep functionality without touching swipe engine:
+ * - shuffleEnabled toggled here
+ * - language changed here (future verses will follow)
+ */
 async function setLanguage(lang) {
   if (loading) return;
   if (lang !== "ar" && lang !== "en") return;
@@ -852,13 +860,15 @@ function wireSettingsUI() {
 
   if (btn) btn.onclick = openSettings;
   if (closeBtn) closeBtn.onclick = closeSettings;
+
+  // close if user taps outside the card
   if (panel) {
     panel.addEventListener("click", (e) => {
       if (e.target === panel) closeSettings();
     });
   }
 
-
+  // reflect current state
   if (shuffleToggle) shuffleToggle.checked = !!shuffleEnabled;
   markLangActive();
 
@@ -873,6 +883,9 @@ function wireSettingsUI() {
 // ===============================
 // INIT
 // ===============================
+
+
+// Old bottom-left reference (deprecated)
 const ayahReferenceEl = document.getElementById('ayah-reference');
 if (ayahReferenceEl) ayahReferenceEl.style.display = 'none';
 
@@ -883,7 +896,7 @@ if (shuffleBtn) {
   if (img) img.src = shuffleEnabled ? icons.shuffle.active : icons.shuffle.inactive;
 }
 
-
+// FORCE STARTING POINT (ORDER MODE)
 if (!shuffleEnabled && ayahHistory.length === 0) {
   currentSurah = 1;
   currentAyah = 1;
@@ -945,6 +958,7 @@ if (langBtn) {
           profileView.classList.add("hidden");
         }
       
+        // Show the requested view
         if (view === "home") {
           if (appView) appView.style.display = "block";
         }
