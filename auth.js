@@ -61,7 +61,7 @@ window.addEventListener("DOMContentLoaded", () => {
 
 (async () => {
   try {
-    const fb = await import("/static/firebase_auth.js");
+    const fb = await import("firebase_auth.js");
     const user = await fb.handleRedirectResult();
     if (user) {
       startAppWithSession(user.email || user.uid);
