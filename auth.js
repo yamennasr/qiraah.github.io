@@ -1,5 +1,3 @@
-const fb = await import("./firebase_auth.js");
-
 console.log("AUTH BEFORE:", localStorage.getItem("qiraah_session"));
 
 window.addEventListener("DOMContentLoaded", () => {
@@ -61,15 +59,11 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   // Handle redirect-based sign-in (Safari fallback)
-(async () => {
-  try {
-    const fb = await import("firebase_auth.js");
-    const user = await fb.handleRedirectResult();
-    if (user) {
-      startAppWithSession(user.email || user.uid);
-    }
-  } catch (e) {}
-})();
+();
+
+  async function loadFirebaseAuthModule() {
+  return await import("./firebase_auth.js");
+}
 
   if (!startView || !appView) {
     console.error("auth.js: Missing #start-view or #app-view in HTML.");
@@ -145,28 +139,25 @@ if (bottomNav) bottomNav.style.display = "flex";
 // ===============================
 async function signInWithGoogleProvider() {
   try {
-    // Dynamically load Firebase module (so we don't break main.js)
-    const fb = await import("firebase_auth.js");
+    const fb = await loadFirebaseAuthModule();
 
-    // Check if returning from redirect (Safari-safe flow)
+    // If returning from redirect
     const redirectUser = await fb.handleRedirectResult();
     if (redirectUser) {
       enterAppWithSession(redirectUser.email || redirectUser.uid);
       return;
     }
 
-    // Try popup first
+    // Try popup
     const user = await fb.googleSignIn();
-
     if (user) {
       enterAppWithSession(user.email || user.uid);
     }
-
-} catch (err) {
-  console.error("Google sign-in error:", err);
-  if (typeof showError === "function") showError("Google sign-in failed. Try again.");
-  else alert("Google sign-in failed. Try again.");
-}
+  } catch (err) {
+    console.error("Google sign-in error:", err);
+    if (typeof showError === "function") showError("Google sign-in failed. Try again.");
+    else alert("Google sign-in failed. Try again.");
+  }
 }
 
   async function tryHandleRedirectResults() {
