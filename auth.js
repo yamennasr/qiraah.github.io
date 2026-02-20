@@ -57,9 +57,7 @@ window.addEventListener("DOMContentLoaded", () => {
     errorEl.textContent = "";
     errorEl.classList.add("hidden");
   }
-
-  // Handle redirect-based sign-in (Safari fallback)
-();
+  ;
 
   async function loadFirebaseAuthModule() {
   return await import("./firebase_auth.js");
