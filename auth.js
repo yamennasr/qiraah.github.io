@@ -1,3 +1,5 @@
+const fb = await import("./firebase_auth.js");
+
 console.log("AUTH BEFORE:", localStorage.getItem("qiraah_session"));
 
 window.addEventListener("DOMContentLoaded", () => {
