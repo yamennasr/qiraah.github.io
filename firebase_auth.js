@@ -1,5 +1,4 @@
-// /static/firebase_auth.js
-// Firebase Auth helper (ESM) — safe init order (no TDZ issues)
+const fb = await import("./firebase_auth.js");
 
 import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
